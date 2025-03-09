@@ -2,3 +2,7 @@ backend/node_modules/
 frontend2/node_modules/
 backend/.env
 frontend2/.expo
+frontend2/eas.json
+frontend2/package-lock.json
+frontend2/.env
+frontend2/.variables
