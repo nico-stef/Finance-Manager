@@ -1,14 +1,16 @@
 import React from 'react';
-import { useEffect, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal, Pressable, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, Modal, Pressable } from 'react-native';
 
+//Modal care contine Flatlist ce afiseaza atributul nume al obiectelor
 export const MyModal = ({
     visible,
     onClose,
     title,
     data,
     keyExtractor,
-    onItemPress
+    onItemPress,
+    nrCol,
+    desc //la calendar months vreau sa le afisez descrescator
 }) => {
     return (
         <Modal
@@ -22,11 +24,12 @@ export const MyModal = ({
                     <Text style={styles.modalTitle}>{title}</Text>
 
                     <FlatList
-                        data={data}
+                        data={desc ? [...data].reverse() : data}
+                        numColumns={nrCol}
                         keyExtractor={keyExtractor}
                         renderItem={({ item }) => (
-                            <TouchableOpacity onPress={() => handleAccount(item)}>
-                                <Text>{item.name}</Text>
+                            <TouchableOpacity onPress={() =>{ onItemPress(item)}} style={[nrCol <= 3 ? styles.threeColumnsItemList : styles.normalItemList]}>
+                                <Text style={{fontFamily: 'serif'}}>{item.name}</Text>
                             </TouchableOpacity>
                         )}
                     />
@@ -89,7 +92,8 @@ const styles = StyleSheet.create({
     },
     buttonClose: {
         backgroundColor: '#16619a',
-        paddingBottom: 10
+        paddingBottom: 10,
+        marginTop: 10
     },
     textStyle: {
         fontFamily: 'serif',
@@ -102,4 +106,18 @@ const styles = StyleSheet.create({
         borderColor: '#fff',
         borderWidth: 2,
     },
+    normalItemList: {
+        paddingVertical: 8,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    threeColumnsItemList: {
+        flex: 1,
+        paddingVertical: 20,
+        justifyContent: 'space-evenly',
+        alignItems: 'center',
+        borderRadius: 10,
+        borderWidth: 0.5,
+        borderColor: 'grey',
+    }
 })

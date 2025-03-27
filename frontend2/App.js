@@ -11,6 +11,7 @@ import AddExpense from './screens/AddExpense';
 import AddIncome from './screens/AddIncome';
 import ManageBudgets from './screens/ManageBudgets';
 import Charts from './screens/Charts';
+import HeaderPage from './components.js/HeaderPage';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,7 +19,8 @@ function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator>
-      <Stack.Screen name="Charts" component={Charts}/>
+      <Stack.Screen name="HeaderPage" component={HeaderPage} options={{ headerShown: false }}/>
+      <Stack.Screen name="Charts" component={Charts} options={{ headerShown: false }}/>
       <Stack.Screen name="Profile" component={ProfileScreen}/>
       <Stack.Screen name="LogIn" component={LogInScreen}/>
       <Stack.Screen name="SignIn" component={SignInScreen}/>

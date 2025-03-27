@@ -1,138 +1,426 @@
 import React from 'react';
 import { useEffect, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal, Pressable, Alert } from 'react-native';
-import FloatingActionButton from '../components.js/FloatingActionButton';
+import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet, Modal, Pressable, Alert, FlatList, Image, StatusBar } from 'react-native';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { jwtDecode } from "jwt-decode";
 import Menu from '../components.js/Menu';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { PieChart } from "react-native-gifted-charts";
-import { getCategories, getAccounts } from '../APIs/moneyManagement';
+import { getAccounts } from '../APIs/moneyManagement';
 import { MyModal } from '../components.js/myModal';
+import { Calendar } from "react-native-calendars";
+import { startOfWeek } from "date-fns";
+import { months, years } from "../variables"
+import { getExpensesPerCateogory } from '../APIs/chart';
+import WalletImage from '../images/wallet.jpg'
 
 export default function Charts() {
 
-    const data = [{ value: 50, tooltipText: 'Apple Sales' }, { value: 80 }, { value: 90 }, { value: 70 }]
-    const [account, setAccount] = useState(''); //selected account
+    const [account, setAccount] = useState({ "name": "total" }); //selected account
+    const [period, setPeriod] = useState('today'); //selected period
+    const [date, setDate] = useState(new Date);
     const [accounts, setAccounts] = useState(''); //list of the accounts
     const [modalAccountVisible, setModalAccountVisible] = useState(false); //moddal account
+    const [modalPeriodVisible, setModalPeriodVisible] = useState(false); //moddal period
+    const [modalWeekCalendar, setModalWeekCalendar] = useState(false); //moddal calendar week
+    const [modalDayCalendar, setModalDayCalendar] = useState(false); //moddal calendar day
+    const [modalMonthCalendar, setModalMonthCalendar] = useState(false); //moddal calendar month
+    const [month, setMonth] = useState(''); //selected month
+    const [modalYearCalendar, setModalYearCalendar] = useState(false); //moddal calendar year
+    const [year, setYear] = useState(''); //selected year
+    const [selectedTab, setSelectedTab] = useState(1); //data sorted by category or tags
+    const [selectedWeek, setSelectedWeek] = useState({}); //week
+    const [selectedDay, setSelectedDay] = useState(''); //day
+    const freq = [{ id: 1, name: "day" }, { id: 2, name: "week" }, { id: 3, name: "month" }, { id: 4, name: "year" }]; //tipuri de frecventa pt modal
+    const [totalSpent, setTotalSpent] = useState(0);
+    var [pieChartData, setPieChartData] = useState([])
+
+    const [token, setAccessToken] = useState(null);
+    const [userid, setUserid] = useState(null);
+    const [isLoggedIn, setIsLoggedIn] = useState(true);
+
+
+    const getAccessToken = async () => {
+        try {
+            //get access token from async storage
+            const accessToken = await AsyncStorage.getItem('accessToken');
+            setAccessToken(accessToken);
+
+            //get info that comes with the access token, in my case the object user who has name
+            const user = jwtDecode(accessToken);
+            setUserid(user.userid);
+
+            if (!accessToken) {
+                console.log('Nu există access token!');
+                setIsLoggedIn(false);
+                navigation.navigate('LogIn');
+                return;
+            }
+
+            const currentTime = Date.now() / 1000; //timpul curent în secunde
+            if (user.exp < currentTime) {
+                console.log('Token-ul a expirat!');
+                setIsLoggedIn(false);
+                navigation.navigate('LogIn');
+                return;
+            }
+
+        } catch (error) {
+            console.error("Eroare la recuperarea token-ului:", error);
+        }
+    };
+
+    //la fiecare useState set..() componenta care le contine se va reranda pt update.
+    useEffect(() => {
+        const getAccessTokenAsync = async () => {
+            await getAccessToken();
+        };
+
+        getAccessTokenAsync();
+
+    }, [])
+
 
     useEffect(() => {
         const fetchAccounts = async () => {
             try {
-                const data = await getAccounts(23);
+                const data = await getAccounts(userid);
+                data.push({ "name": "total" })
                 setAccounts(data);
             } catch (err) {
                 console.error(err);
             }
         };
 
+        fetchAccounts();
 
-        if (modalAccountVisible) {
-            fetchAccounts();
+    }, []);
+
+    useEffect(() => {
+
+    }, [pieChartData]);
+
+    useEffect(() => {
+
+        const fetchExpensesData = async (period, account_id, date, start_week, end_week, month, year, user_id) => {
+            try {
+                const data = await getExpensesPerCateogory(period, date, account_id, start_week, end_week, month, year, user_id);
+
+                let sum = 0;
+                data.forEach((el) => sum += parseFloat(el.total)); //calculam totalul cheltuit
+                setTotalSpent(sum);
+
+                pieChartData = data.map(item => ({
+                    tooltipText: `${item.category}`,
+                    value: parseFloat(item.total),
+                    category: item.category,
+                    total: item.total,
+                    percent: ((parseFloat(item.total) / sum) * 100).toFixed(2)
+                }));
+
+                setPieChartData(pieChartData.sort((a, b) => parseFloat(b.total) - parseFloat(a.total))) //sortam desc
+            } catch (error) {
+                console.error('Eroare la cererea GET expenses chart:', error);
+            }
+        };
+
+        if (period == 'today') {
+            const acc = account.name === 'total' ? 'total' : account.idaccounts;
+            fetchExpensesData(period, acc, date.toLocaleDateString(), '', '', '', '', userid);
         }
-    }, [modalAccountVisible]);
 
-    const closeModal = () => setModalAccountVisible(false);
+        if (period.name === "day" && selectedDay) {
+            const acc = account.name === 'total' ? 'total' : account.idaccounts;
+            fetchExpensesData(period.name, acc, selectedDay, '', '', '', '', userid);
+        }
+
+        if (period.name === "week" && selectedWeek) {
+            const acc = account.name === 'total' ? 'total' : account.idaccounts;
+            fetchExpensesData(period.name, acc, '', Object.keys(selectedWeek)[0], Object.keys(selectedWeek)[6], '', '', userid);
+        }
+
+        if (period.name === "month" && month) {
+            const acc = account.name === 'total' ? 'total' : account.idaccounts;
+            fetchExpensesData(period.name, acc, '', '', '', month.month, month.year, userid);
+        }
+
+        if (period.name === "year" && year) {
+            const acc = account.name === 'total' ? 'total' : account.idaccounts;
+            fetchExpensesData(period.name, acc, '', '', '', '', year.name, userid);
+        }
+
+    }, [account, selectedDay, selectedWeek, month, year]);
+
+
+    const closeModal = (setModalVisibile) => {
+        return () => { //functie pe care o putem apela mai tarziu, nu imediat. fara return ar fi fost apelata imediat
+            setModalVisibile(false);
+        };
+    };
 
     const handleAccount = (item) => {
-        setAccount(account);
+        setAccount(item);
         setModalAccountVisible(false);
     }
 
+    const handlePeriod = (item) => {
+        setPeriod(item);
+        setModalPeriodVisible(false);
+    }
+
+    const handleDay = (item) => {
+        const parts = item.split("-"); // avem initial formatul 2025-05-13 si vreau 05/13/2025
+        const formattedDate = `${parts[1]}/${parts[2]}/${parts[0]}`;
+        setSelectedDay(formattedDate);
+    }
+
+    const handleMonth = (item) => {
+        setMonth(item);
+        setModalMonthCalendar(false);
+    }
+
+    const handleYear = (item) => {
+        setYear(item);
+        setModalYearCalendar(false);
+    }
+
+    const handleTabPress = (index) => {
+        setSelectedTab(index);
+    };
+
+    const getWeekDates = (day) => { //day are forma 2025-03-07
+
+        const selectedDay = new Date(day); //convertim in obiect date si are forma 2025-03-13T00:00:00.000Z
+        const start = startOfWeek(selectedDay, { weekStartsOn: 1 }); //prima zi a saptamanii in care e selectedDay
+        //o sa fie duminica dar e ok pt ca la loop adaugam +1
+        let weekDays = {};
+
+        for (let i = 0; i < 7; i++) {
+            start.setDate(start.getDate() + 1); //getDate returneaza numarul zilei ex 7
+            //start are forma 2025-03-23T22:00:00.000Z
+            const date = start.toISOString().split("T")[0];
+
+            weekDays[date] = { //perechi cheie-valoare
+                selected: true,
+                marked: true,
+                selectedColor: "green",
+            };
+        }
+
+        return weekDays;
+    };
+
+    const openModal = () => {
+        if (period.name === 'day')
+            setModalDayCalendar(true);
+        if (period.name === 'week')
+            setModalWeekCalendar(true);
+        if (period.name === 'month')
+            setModalMonthCalendar(true);
+        if (period.name === 'year')
+            setModalYearCalendar(true);
+    }
+
+    const handleCalendarButtonTitle = () => {
+        if (period.name === 'day')
+            return selectedDay;
+        if (period.name === 'week' && Object.keys(selectedWeek).length == 0)
+            return '';
+        if (period.name === 'week')
+            return Object.keys(selectedWeek)[0].slice(5) + "/" + Object.keys(selectedWeek)[6].slice(5);
+        if (period.name === 'month')
+            return month.name;
+        if (period.name === 'year')
+            return year.name;
+        return date.toLocaleDateString();
+    }
+
+
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={{ flex: 1 }}>
+            <StatusBar backgroundColor="white" barStyle="dark-content" />
+            <View style={styles.container}>
 
-            <MyModal
-                visible={modalAccountVisible}
-                onClose={closeModal}
-                title="Select Account"
-                data={accounts}
-                keyExtractor={(item) => item.idaccounts}
-            />
+                {/* --------modal pentru accounts------------- */}
+                <MyModal
+                    visible={modalAccountVisible} onClose={closeModal(setModalAccountVisible)} title="Select the account"
+                    data={accounts} keyExtractor={(item) => item.idaccounts} onItemPress={handleAccount} nrCol={2}
+                />
 
-            <View style={styles.box}>
-                <View style={styles.optionsChart}>
-                    <TouchableOpacity style={styles.optionsButton} onPress={() => setModalAccountVisible(true)}>
-                        <Icon name="credit-card" size={20} color="white" style={styles.icon} />
-                        <Text style={styles.buttonText}>Account</Text>
+                {/* ------------modal pentru perioada------------- */}
+                <MyModal
+                    visible={modalPeriodVisible} onClose={closeModal(setModalPeriodVisible)} title="Select the period"
+                    data={freq} keyExtractor={(item) => item.id} onItemPress={handlePeriod}
+                />
+
+                {/* ---------------modal pentru calendar WEEK-------------- */}
+                <Modal
+                    animationType="slide" r
+                    transparent={true}
+                    visible={modalWeekCalendar}>
+                    <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+                            <Calendar
+                                onDayPress={(day) => { setSelectedWeek(getWeekDates(day.dateString)) }}//atributul dateString contine formatul "2025-03-21"
+                                markedDates={selectedWeek}
+                            />
+                            <Pressable
+                                style={[styles.button, styles.buttonClose]}
+                                onPress={() => setModalWeekCalendar(!modalWeekCalendar)}>
+                                <Text style={styles.textStyle}>Close</Text>
+                            </Pressable>
+                        </View>
+                    </View>
+                </Modal>
+
+                {/* ---------------modal pentru calendar DAY-------------- */}
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={modalDayCalendar}>
+                    <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+                            <Calendar
+                                onDayPress={(day) => { handleDay(day.dateString); setModalDayCalendar(!modalDayCalendar); }}
+                                markedDates={{
+                                    [selectedDay]: { selected: true, disableTouchEvent: true, selectedDotColor: 'green' }
+                                }}
+                            />
+                            <Pressable
+                                style={[styles.button, styles.buttonClose]}
+                                onPress={() => setModalDayCalendar(!modalDayCalendar)}>
+                                <Text style={styles.textStyle}>Close</Text>
+                            </Pressable>
+                        </View>
+                    </View>
+                </Modal>
+
+                {/* ------------modal pentru calendar MONTH------------- */}
+                <MyModal
+                    visible={modalMonthCalendar} onClose={closeModal(setModalMonthCalendar)} title="Select the month"
+                    data={months} keyExtractor={(item) => item.id} onItemPress={handleMonth} nrCol={3} desc={true}
+                />
+
+                {/* ------------modal pentru calendar YEAR------------- */}
+                <MyModal
+                    visible={modalYearCalendar} onClose={closeModal(setModalYearCalendar)} title="Select the year"
+                    data={years} keyExtractor={(item) => item.id} onItemPress={handleYear} nrCol={3} desc={true}
+                />
+
+                <View style={styles.pieOption}>
+                    <TouchableOpacity style={[styles.pieOptionsButton, { backgroundColor: selectedTab === 1 ? "white" : "#166055" }]} onPress={() => handleTabPress(1)}>
+                        <Icon name="briefcase" size={18} color={selectedTab === 1 ? 'black' : 'white'} style={styles.icon} />
+                        <Text style={{ color: selectedTab === 1 ? 'black' : 'white' }}>view by categories</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.optionsButton} >
-                        <Icon name="tags" size={20} color="white" style={styles.icon} />
-                        <Text style={styles.buttonText}>Tags</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.optionsButton} >
-                        <Icon name="clock" size={20} color="white" style={styles.icon} />
-                        <Text style={styles.buttonText}>Period</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.optionsButton} >
-                        <Icon name="calendar-alt" size={20} color="white" style={styles.icon} />
-                        <Text style={styles.buttonText}>Date</Text>
+                    <TouchableOpacity style={[styles.pieOptionsButton, { backgroundColor: selectedTab === 2 ? "white" : "#166055" }]} onPress={() => handleTabPress(2)}>
+                        <Icon name="tags" size={18} color={selectedTab === 2 ? 'black' : 'white'} style={styles.icon} />
+                        <Text style={{ color: selectedTab === 2 ? 'black' : 'white' }}>view by tags</Text>
                     </TouchableOpacity>
                 </View>
 
-                <View styles={{ marginTop: 50 }}>
-                    <PieChart
 
-                        data={data}
-                        strokeColor='black'
-                        strokeWidth={1}
-                        focusOnPress={true}
-                        showTooltip={true}
-                    />
-                </View>
-            </View>
+                <View style={styles.box}>
+
+                    <View style={styles.optionsChart}>
+                        <TouchableOpacity style={styles.optionsButton} onPress={() => setModalAccountVisible(true)}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Icon name="credit-card" size={20} color="white" style={styles.icon} />
+                                <Icon name="chevron-down" size={12} color="white" marginStart={4} />
+                            </View>
+                            <Text style={styles.buttonText}>{account.name ? account.name : account}</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.optionsButton} onPress={() => setModalPeriodVisible(true)}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Icon name="clock" size={20} color="white" style={styles.icon} />
+                                <Icon name="chevron-down" size={12} color="white" marginStart={4} />
+                            </View>
+                            <Text style={styles.buttonText}>{period.name ? period.name : period}</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.optionsButton} onPress={() => {
+                            period === 'today' && Alert.alert('Please select a period type!'); //first you must select the period type
+                            openModal();
+                        }
+                        }>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Icon name="calendar-alt" size={20} color="white" style={styles.icon} />
+                                <Icon name="chevron-down" size={12} color="white" marginStart={4} />
+                            </View>
+                            <Text style={styles.buttonText}>{handleCalendarButtonTitle()}</Text>
+                        </TouchableOpacity>
+                    </View>
 
 
-            {/* ----------------modal account-------------- */}
-            {/* <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalAccountVisible}
-                onRequestClose={() => setModalAccountVisible(false)}
-            >
-                <View style={styles.centeredView}>
-                    <View style={styles.modalView}>
-                        <Text style={styles.modalTitle}>Select account</Text>
+
+                    {pieChartData.length > 0 ? (
+                        <View style={{ alignItems: "center" }}>
+                            <PieChart
+                                data={pieChartData}
+                                strokeColor='black'
+                                strokeWidth={1}
+                                focusOnPress={true}
+                                showTooltip={true}
+                            />
+                        </View>
+                    ) : (
+                        <View style={{ alignItems: "center", maxHeight: 150 }}>
+                            <Image source={WalletImage} style={{ width: 200, height: 200, marginBlockStart: 50 }} />
+                            <Text style={{ marginTop: 10, fontSize: 16, color: "gray" }}>Nicio cheltuială înregistrată</Text>
+                        </View>
+                    )}
+
+
+                    <View style={{ maxHeight: 250 }}>
+                        {totalSpent > 0 &&
+                            <Text style={{ fontWeight: 'bold', fontSize: 16, flexDirection: 'row', textAlign: "center", paddingBottom: 10 }}>Total spent: {totalSpent}$</Text>
+                        }
 
                         <FlatList
-                            data={accounts}
-                            keyExtractor={(item) => item.idaccounts}
+                            data={pieChartData}
+                            keyExtractor={(item, index) => index.toString()}
                             renderItem={({ item }) => (
-                                <Pressable style={[
-                                    styles.categoryItem,
-                                    account && account.idaccounts === item.idaccounts
-                                        ? styles.selectedCategory
-                                        : null,
-                                    ]}
-                                    onPress={() => handleAccount(item)}
-                                     >
-                                    <Text style={styles.categoryText}>{item.name}</Text>
-                                </Pressable>
+                                <View style={styles.boxInfo}>
+                                    <Text style={[styles.boxInfoText, styles.boxInfoTextCategory]}>{item.category}</Text>
+                                    <Text style={styles.boxInfoText}>{item.total}$</Text>
+                                    <Text style={styles.boxInfoText}>{item.percent}%</Text>
+                                </View>
                             )}
                         />
 
-                        <Pressable
-                            style={[styles.button, styles.buttonClose]}
-                            onPress={() => setModalAccountVisible(false)}
-                        >
-                            <Text style={styles.textStyle}>Close</Text>
-                        </Pressable>
                     </View>
                 </View>
-            </Modal> */}
-
-
-
-
-            <FloatingActionButton ></FloatingActionButton>
-            <Menu></Menu>
-        </View>
+                <Menu></Menu>
+            </View>
+        </SafeAreaView>
     )
 }
 
 const styles = StyleSheet.create({
+    boxInfo: {
+        flex: 1,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        paddingVertical: 4,
+    },
+    boxInfoText: {
+        width: '25%',
+        fontFamily: 'serif',
+        fontSize: 15,
+        textAlign: "center"
+    },
+    boxInfoTextCategory: {
+        width: '50%',
+        fontWeight: 'bold'
+    },
+    centeredView: {
+        fontFamily: 'serif',
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+    },
     dropdownContainer: {
         marginTop: 20,
         width: '90%',
@@ -150,18 +438,32 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         borderRadius: 10,
     },
-    optionsButton: {
+    pieOption: {
+        flexDirection: "row",
+        justifyContent: "space-around",
+        backgroundColor: "#166055",
+        paddingVertical: 5,
+        marginBottom: 5,
+    },
+    pieOptionsButton: {
         flex: 1,
         alignItems: "center",
+        borderRadius: 20,
+        marginHorizontal: 5,
+        paddingVertical: 2,
+
+    },
+    optionsButton: {
+        flex: 1,
+        alignItems: "center"
     },
     box: {
-        height: 300,
         width: '90%',
-        marginTop: 30,
+        marginTop: 20,
         backgroundColor: 'white',
         borderRadius: 10,
-        justifyContent: 'center',
         alignItems: 'center',
+        justifyContent: 'flex-start',
     },
     label: {
         fontFamily: 'serif',
@@ -169,65 +471,51 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold'
     },
+    buttonText: {
+        color: 'white',
+        fontFamily: 'serif'
+    },
 
-    // ------------modal---------------
     centeredView: {
-        fontFamily: 'serif',
         flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     modalView: {
+        margin: 20,
         backgroundColor: 'white',
-        borderRadius: 10,
-        padding: 20,
-        width: '90%',
-        maxHeight: 500,
-    },
-    modalTitle: {
-        fontFamily: 'serif',
-        fontSize: 18,
-        fontWeight: "bold",
-        marginBottom: 15,
-        textAlign: "center",
-    },
-    categoryItem: {
-        flex: 1,
-        alignItems: "center",
-        paddingVertical: 15,
-        paddingHorizontal: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: "#ddd",
-    },
-    categoryText: {
-        fontFamily: 'serif',
-    },
-    button: {
-        width: '60%',
-        alignSelf: 'center',
-        borderColor: 'black',
-        borderWidth: 1,
         borderRadius: 20,
-        padding: 10,
+        padding: 35,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
         elevation: 5,
     },
+    button: {
+        borderRadius: 20,
+        padding: 10,
+        elevation: 2,
+    },
     buttonOpen: {
-        backgroundColor: '#25a18e',
+        backgroundColor: '#F194FF',
     },
     buttonClose: {
         backgroundColor: '#16619a',
-        paddingBottom: 10
+        paddingBottom: 10,
+        marginTop: 10
     },
     textStyle: {
-        fontFamily: 'serif',
-        fontSize: 16,
-        textAlign: "center",
-        color: "white"
+        color: 'white',
+        fontWeight: 'bold',
+        textAlign: 'center',
     },
-    selectedCategory: {
-        backgroundColor: '#dbf0e3',
-        borderColor: '#fff',
-        borderWidth: 2,
+    modalText: {
+        marginBottom: 15,
+        textAlign: 'center',
     },
 })

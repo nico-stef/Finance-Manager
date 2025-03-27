@@ -45,7 +45,7 @@ function EditProfile() {
         }
     };
 
-    //useEffect rerandeaza si daca exista in interiorul functiei useState => se rerandeaza de 3 ori functia getAccessToken
+    //la fiecare useState set..() componenta care le contine se va modifica => ex: daca comp. contine si accessTokens si username se reradeaza de 2 ori
     useEffect(() => {
         const getAccessTokenAsync = async () => {
             await getAccessToken();

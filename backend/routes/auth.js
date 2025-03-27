@@ -23,6 +23,15 @@ router.post("/register", async (req, res) => {
         return res.status(400).json({ error: 'Toate campurile sunt obligatorii!' });
     };
 
+    //check if user with the same username already exists
+    const query1 = `SELECT * FROM users WHERE username = ?;`;
+    const data1 = [username];
+
+    const result = await queryAsync(query1, data1);
+    if (result.length > 0)
+        return res.status(500).json({ message: 'User with this username already exists' });
+
+    //continue with generating hashed password
     try {
         //generating the salt
         const salt = await bcrypt.genSalt(saltRounds);
@@ -92,7 +101,7 @@ router.post("/login", async (req, res) => {
     }
 
     //generare de tokenuri
-    const user = { name: username };
+    const user = { name: username, userid: result[0].idusers };
     const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
     const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "7d" });
 
