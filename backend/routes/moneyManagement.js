@@ -164,7 +164,6 @@ router.post('/addIncome', async (req, res) => {
         //la un camp de tip DECIMAL, FLOAT sau DOUBLE, rezultatul poate fi returnat sub forma de string în JS,
         //mai ales daca sunt folosite librarii precum mysql sau mysql2
         const newTotal = parseFloat(result2[0].total) + parseFloat(amount);
-        console.log("suma aia",newTotal)
 
         const [result3] = await connection.query('UPDATE accounts SET total = ? WHERE idaccounts = ?', [newTotal, account_id]);
         

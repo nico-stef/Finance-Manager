@@ -32,10 +32,17 @@ export const getIncomesRecords = async (account_id, userid) => {
 export const updateExpense = async (record) => {
     try {
         const idexpense = record.idexpenses;
+
+        const localDate = new Date(record.date);
+        const year = localDate.getFullYear();
+        const month = String(localDate.getMonth() + 1).padStart(2, '0');
+        const day = String(localDate.getDate()).padStart(2, '0');
+        const finalDate =  `${year}-${month}-${day}`;
+        
         const response = await axios.patch(`${API_URL}/records/expenses/update/${idexpense}`, {
             category: record.category,
             amount: record.amount,
-            date: record.date,
+            date: finalDate,
             note: record.note
         });
         return response.data.message;
