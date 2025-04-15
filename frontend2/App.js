@@ -1,17 +1,9 @@
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import LogInScreen from './screens/LogInScreen';
-import SignInScreen from './screens/SignIn';
-import ProfileScreen from './screens/Profile';
-import HomeScreen from './screens/HomeScreen';
-import SeeProfile from './screens/SeeProfile';
-import EditProfile from './screens/EditProfile';
-import AddExpense from './screens/AddExpense';
-import AddIncome from './screens/AddIncome';
-import ManageBudgets from './screens/ManageBudgets';
-import Charts from './screens/Charts';
-import HeaderPage from './components.js/HeaderPage';
+import { LogInScreen, SignInScreen, ProfileScreen, HomeScreen, SeeProfile, EditProfile } from './screens';
+import { AddExpense, AddIncome, ManageBudgets, Charts, FinancialRecords } from './screens';
+import HeaderPage from './components.js/HeaderPage'
 
 const Stack = createNativeStackNavigator();
 
@@ -19,8 +11,11 @@ function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator>
+      <Stack.Screen name="FinancialRecords" component={FinancialRecords} options={{ headerShown: false }}/>
       <Stack.Screen name="HeaderPage" component={HeaderPage} options={{ headerShown: false }}/>
+      
       <Stack.Screen name="Charts" component={Charts} options={{ headerShown: false }}/>
+      
       <Stack.Screen name="Profile" component={ProfileScreen}/>
       <Stack.Screen name="LogIn" component={LogInScreen}/>
       <Stack.Screen name="SignIn" component={SignInScreen}/>

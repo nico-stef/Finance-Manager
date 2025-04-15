@@ -106,6 +106,7 @@ export default function AddIncome() {
         if (event.type === "set") {
             const currentDate = selectedDate;
             setDate(currentDate);
+            console.log("datda", currentDate)
         }
         setDatePicker(false);
     }

@@ -33,6 +33,7 @@ export default function ProfileScreen() {
             if (!accessToken) {
                 console.log('Nu există access token!');
                 setIsLoggedIn(false);
+                await AsyncStorage.removeItem('accessToken');
                 navigation.navigate('LogIn');
                 return;
             }
@@ -41,6 +42,7 @@ export default function ProfileScreen() {
             if (user.exp < currentTime) {
                 console.log('Token-ul a expirat!');
                 setIsLoggedIn(false);
+                await AsyncStorage.removeItem('accessToken');
                 navigation.navigate('LogIn');
                 return;
             }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect, useState } from "react";
-import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet, Modal, Pressable, Alert, FlatList, Image, StatusBar } from 'react-native';
+import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet, Modal, Pressable, Alert, FlatList, Image, StatusBar, Animated } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
 import Menu from '../components.js/Menu';
@@ -13,11 +13,14 @@ import { startOfWeek } from "date-fns";
 import { months, years } from "../variables"
 import { getExpensesPerCateogory } from '../APIs/chart';
 import WalletImage from '../images/wallet.jpg'
+import { useNavigation } from '@react-navigation/native';
+import SideMenuAnimated from '../components.js/SideMenuAnimated';
+import Header from '../components.js/Header';
 
 export default function Charts() {
 
     const [account, setAccount] = useState({ "name": "total" }); //selected account
-    const [period, setPeriod] = useState('today'); //selected period
+    const [period, setPeriod] = useState("today"); //selected period
     const [date, setDate] = useState(new Date);
     const [accounts, setAccounts] = useState(''); //list of the accounts
     const [modalAccountVisible, setModalAccountVisible] = useState(false); //moddal account
@@ -38,6 +41,7 @@ export default function Charts() {
     const [token, setAccessToken] = useState(null);
     const [userid, setUserid] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(true);
+    const navigation = useNavigation();
 
 
     const getAccessToken = async () => {
@@ -53,6 +57,7 @@ export default function Charts() {
             if (!accessToken) {
                 console.log('Nu există access token!');
                 setIsLoggedIn(false);
+                await AsyncStorage.removeItem('accessToken');
                 navigation.navigate('LogIn');
                 return;
             }
@@ -61,6 +66,7 @@ export default function Charts() {
             if (user.exp < currentTime) {
                 console.log('Token-ul a expirat!');
                 setIsLoggedIn(false);
+                await AsyncStorage.removeItem('accessToken');
                 navigation.navigate('LogIn');
                 return;
             }
@@ -94,7 +100,7 @@ export default function Charts() {
 
         fetchAccounts();
 
-    }, []);
+    }, [userid]);
 
     useEffect(() => {
 
@@ -123,10 +129,10 @@ export default function Charts() {
                 console.error('Eroare la cererea GET expenses chart:', error);
             }
         };
-
-        if (period == 'today') {
+        
+        if (period === "today") {
             const acc = account.name === 'total' ? 'total' : account.idaccounts;
-            fetchExpensesData(period, acc, date.toLocaleDateString(), '', '', '', '', userid);
+            fetchExpensesData(period, acc, date.toLocaleDateString(), '', '', '', '', userid)
         }
 
         if (period.name === "day" && selectedDay) {
@@ -149,7 +155,7 @@ export default function Charts() {
             fetchExpensesData(period.name, acc, '', '', '', '', year.name, userid);
         }
 
-    }, [account, selectedDay, selectedWeek, month, year]);
+    }, [account, selectedDay, selectedWeek, month, year, userid]);
 
 
     const closeModal = (setModalVisibile) => {
@@ -235,10 +241,20 @@ export default function Charts() {
         return date.toLocaleDateString();
     }
 
+    //cod meniu lateral
+    const [isOpen, setIsOpen] = useState(true);
+
+    const toggleMenu = () => {
+        setIsOpen(!isOpen);
+    };
 
     return (
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaView style={{ flex: 1 }} >
             <StatusBar backgroundColor="white" barStyle="dark-content" />
+
+            {/* header meniu */}
+            <Header title="Charts" icon="chart-pie" toggleMenu={toggleMenu}></Header>
+
             <View style={styles.container}>
 
                 {/* --------modal pentru accounts------------- */}
@@ -255,7 +271,7 @@ export default function Charts() {
 
                 {/* ---------------modal pentru calendar WEEK-------------- */}
                 <Modal
-                    animationType="slide" r
+                    animationType="slide"
                     transparent={true}
                     visible={modalWeekCalendar}>
                     <View style={styles.centeredView}>
@@ -320,7 +336,7 @@ export default function Charts() {
                 </View>
 
 
-                <View style={styles.box}>
+                <View style={styles.box} >
 
                     <View style={styles.optionsChart}>
                         <TouchableOpacity style={styles.optionsButton} onPress={() => setModalAccountVisible(true)}>
@@ -367,12 +383,12 @@ export default function Charts() {
                     ) : (
                         <View style={{ alignItems: "center", maxHeight: 150 }}>
                             <Image source={WalletImage} style={{ width: 200, height: 200, marginBlockStart: 50 }} />
-                            <Text style={{ marginTop: 10, fontSize: 16, color: "gray" }}>Nicio cheltuială înregistrată</Text>
+                            <Text style={{ marginTop: 10, fontSize: 16, color: "gray" }}>No expense recorded</Text>
                         </View>
                     )}
 
 
-                    <View style={{ maxHeight: 250 }}>
+                    <View style={{ maxHeight: 200 }}>
                         {totalSpent > 0 &&
                             <Text style={{ fontWeight: 'bold', fontSize: 16, flexDirection: 'row', textAlign: "center", paddingBottom: 10 }}>Total spent: {totalSpent}$</Text>
                         }
@@ -391,8 +407,12 @@ export default function Charts() {
 
                     </View>
                 </View>
+
                 <Menu></Menu>
             </View>
+
+            {/* animatie meniu lateral */}
+            <SideMenuAnimated isOpen={isOpen}></SideMenuAnimated>
         </SafeAreaView>
     )
 }

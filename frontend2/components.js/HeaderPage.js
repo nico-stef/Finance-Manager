@@ -6,13 +6,14 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get("window");
 
+//this is the header at the top of the page with the page name and the hamburger icon
 export default function HeaderPage() {
     const [isOpen, setIsOpen] = useState(false);
     const translateX = useAnimatedValue(-screenWidth * 0.7); //initial ascuns
 
     const toggleMenu = () => {
         Animated.timing(translateX, { // creeaza o animatie de tip timing, adica o tranzitie fluida într-un anumit timp
-                                      // translateX este valoarea animată care se va modifica
+            // translateX este valoarea animată care se va modifica
             toValue: isOpen ? -screenWidth * 0.7 : 0, //daca e deschis il ascundem
             duration: 400, //timpul miscarii pe axa X
             useNativeDriver: true,
@@ -21,8 +22,7 @@ export default function HeaderPage() {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1 }}>
-            <StatusBar backgroundColor="white" barStyle="dark-content" />
+        <View  style={{flex: 1}}>
             <View style={styles.headerContainer}>
                 <TouchableOpacity onPress={toggleMenu}>
                     <Icon style={styles.icon} name="bars" color="white" size={24}></Icon>
@@ -34,8 +34,7 @@ export default function HeaderPage() {
                 <Text></Text>
             </View>
 
-
-            {/* Meniul lateral */}
+            
             <Animated.View
                 style={{
                     position: 'absolute',
@@ -48,7 +47,9 @@ export default function HeaderPage() {
                     height: '100%',
                     marginTop: screenHeight * 0.07,
                     transform: [{ translateX }], //permite mutarea pe axa X
+                    zIndex: 10000, 
                 }}
+                
             >
                 <Text style={{ color: 'white', fontSize: 20, marginBottom: 20 }}>Meniu</Text>
 
@@ -61,9 +62,9 @@ export default function HeaderPage() {
                 </TouchableOpacity>
 
             </Animated.View>
+            
 
-        </SafeAreaView>
-
+        </View>
 
     )
 }

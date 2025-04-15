@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useNavigation } from '@react-navigation/native';
 
+// this is the menu displayed at the bottom of the page
 export default function Menu() {
     const navigation = useNavigation();
     
@@ -28,6 +29,7 @@ export default function Menu() {
 
 const styles = StyleSheet.create({
     bottomMenu: {
+        zIndex: 10,
         flexDirection: "row",
         justifyContent: "space-around",
         backgroundColor: "#166055",
