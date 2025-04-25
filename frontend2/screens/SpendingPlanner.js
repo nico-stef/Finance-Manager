@@ -8,12 +8,14 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import Menu from '../components.js/Menu';
 import SideMenuAnimated from '../components.js/SideMenuAnimated';
 import Header from '../components.js/Header';
+import { getObjectives } from '../APIs/spendingPlanner';
 
 export default function SpendingPlanner() {
 
     const [isOpen, setIsOpen] = useState(true);
     const [token, setAccessToken] = useState(null);
     const [userid, setUserid] = useState(null);
+    const [objectives, setObjectives] = useState(null);
     const navigation = useNavigation();
 
     const getAccessToken = async () => {
@@ -47,9 +49,41 @@ export default function SpendingPlanner() {
         getAccessTokenAsync();
     }, []);
 
+    //get objectives
+    useEffect(() => {
+        const getObjectivesAsync = async () => {
+            if (token) {
+                const data = await getObjectives(token);
+                setObjectives(data);
+            }
+        };
+        getObjectivesAsync();
+    }, [token]);
+
     const toggleMenu = () => {
         setIsOpen(!isOpen);
     };
+
+    const Record = ({ item }) => {
+        return (
+            <TouchableOpacity style={styles.cardRecord}>
+                <View style={styles.infoContainer}>
+                    <Text style={styles.nameText}>{item.name_objective}</Text>
+                    <Text style={styles.detailText}>Due date: {item.due_date ? new Date(item.due_date).toLocaleDateString("ro-EN", {
+                                    day: 'numeric',
+                                    month: 'long',
+                                    year: 'numeric',
+                                }): ""}</Text>
+                    <Text style={styles.detailText}>Amount: {item.amount_allocated} </Text>
+                </View>
+
+                <View style={styles.iconContainer}>
+                    <Icon name="arrow-right" size={20} style={styles.icon} />
+                </View>
+            </TouchableOpacity>
+        );
+    };
+
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
@@ -57,8 +91,17 @@ export default function SpendingPlanner() {
             <View style={{ flex: 1 }}>
                 <Header title="Spending Planner" icon="clipboard-list" toggleMenu={toggleMenu}></Header>
 
-                <View style={{ flex: 1, alignItems: 'center' }}>
-                    <TouchableOpacity style={styles.addObjective}  onPress={() => navigation.navigate('CreateObjective', { userId: userid })}>
+                <View style={{ flex: 1, alignItems: 'center', marginTop: 20, backgroundColor: '#E8F5F2', }}>
+
+                    <FlatList
+                        data={objectives}
+                        renderItem={({ item }) => <Record item={item} />}
+                        keyExtractor={item => item.idObjective}
+                        // initialNumToRender={10}
+                        contentContainerStyle={{ paddingBottom: 130 }}
+                    />
+
+                    <TouchableOpacity style={styles.addObjective} onPress={() => navigation.navigate('CreateObjective', { userId: userid })}>
                         <Text style={[styles.buttonText, { fontSize: 16, fontWeight: 'bold' }]}>+ create objective</Text>
                     </TouchableOpacity>
                 </View>
@@ -91,4 +134,38 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontFamily: 'serif',
     },
+    icon: {
+        color: '#007BFF',
+        fontWeight: 'normal'
+    },
+    buttonTextRecord: {
+        color: 'black',
+        fontFamily: 'serif',
+        fontSize: 16
+    },
+    cardRecord: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignContent: 'center',
+        width: '95%',
+        alignSelf: 'center',
+        paddingVertical: 16,
+        minHeight: 70,
+        backgroundColor: "#fff",
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: "space-between",
+        marginTop: 10,
+        paddingHorizontal: 15,
+        borderRadius: 10,
+        padding: 10,
+        elevation: 3,
+        borderWidth: 0.5,
+        borderColor: 'grey',
+    },
+    nameText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 5
+    }
 })

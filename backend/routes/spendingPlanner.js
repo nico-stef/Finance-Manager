@@ -5,6 +5,7 @@ const connection = require("../database");
 
 const usefulFunctions = require("../queryFunction");
 const queryFunction = usefulFunctions.queryAsync;
+const authenticateToken = usefulFunctions.authenticateToken;
 
 app.use(express.urlencoded({ extended: false })); //se ocupa de procesarea datelor trimise in format formular html
 app.use(express.json()); //conversie din JSON in obiecte js
@@ -28,6 +29,25 @@ router.post('/addObjective', async (req, res) => {
         console.error("Eroare la executarea interogării:", err);
         return res.status(500).json({ message: "error add into objectives" });
     }
+});
+
+router.get("/getObjectives", authenticateToken, async (req, res) => {
+
+    const userId = req.user.userid;
+
+    const query =  `SELECT idObjective, name_objective, amount_allocated, due_date, account_id, budget_id, note
+                    FROM objectives
+                    WHERE user_id = ?
+                    ORDER BY due_date DESC;`;
+
+    try {
+        const result = await queryFunction(query, [userId]);
+        return res.status(200).json(result);
+    } catch (err) {
+        console.error("Eroare la executarea interogării:", err);
+        return res.status(500).json({ message: "error at getting objectives" });
+    }
+
 });
 
 module.exports = router;

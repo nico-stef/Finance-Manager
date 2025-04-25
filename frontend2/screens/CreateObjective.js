@@ -127,11 +127,11 @@ export default function CreateObjective({ route }) {
 
                             {/* ----------------pick the name------------------- */}
                             <Text style={styles.label}>Name of your objective*: </Text>
-                            <TextInput style={styles.input} onChangeText={setNameObjective} value={nameObjective} placeholder="type the name" />
+                            <TextInput style={[styles.input, {backgroundColor: 'white'}]} onChangeText={setNameObjective} value={nameObjective} placeholder="type the name" />
 
                             {/* ----------------pick the amount------------------- */}
                             <Text style={styles.label}>Amount allocated*: </Text>
-                            <TextInput style={styles.input} onChangeText={setAmount} value={amount} placeholder="type your amount" keyboardType="numeric" />
+                            <TextInput style={[styles.input, {backgroundColor: 'white'}]} onChangeText={setAmount} value={amount} placeholder="type your amount" keyboardType="numeric" />
 
                             {/* -------------picking the date----------------- */}
                             <View style={styles.row}>
@@ -184,7 +184,7 @@ export default function CreateObjective({ route }) {
 
                             {/* ---------------pick the note------------- */}
                             <Text style={styles.label}>Note: </Text>
-                            <TextInput style={styles.input} onChangeText={setNote} value={note} placeholder="write a note" />
+                            <TextInput style={[styles.input, {backgroundColor: 'white'}]} onChangeText={setNote} value={note} placeholder="write a note" />
 
                             <Pressable
                                 style={[styles.button, styles.buttonClose, { marginTop: 20 }]}

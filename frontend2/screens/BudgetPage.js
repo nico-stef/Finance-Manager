@@ -176,9 +176,6 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         flexDirection: 'column',   // Pune elementele pe verticală
         justifyContent: 'space-between',
-        // elevation: 3
-        // borderWidth: 0.5,
-        // borderColor: 'grey',
     },
     viewPreviousBudgets: {
         flexDirection: 'row',
