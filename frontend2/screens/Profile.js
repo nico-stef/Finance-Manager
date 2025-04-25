@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
 import { getUserData, deleteUser } from '../APIs/profile';
@@ -10,6 +10,8 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import { actions } from "../variables"
 import FloatingActionButton from '../components.js/FloatingActionButton';
 import Menu from '../components.js/Menu'
+import SideMenuAnimated from '../components.js/SideMenuAnimated';
+import Header from '../components.js/Header';
 
 export default function ProfileScreen() {
 
@@ -19,6 +21,7 @@ export default function ProfileScreen() {
     const [isLoggedIn, setIsLoggedIn] = useState(true);
     const navigation = useNavigation();
     const actionsFAB = actions;
+    const [isOpen, setIsOpen] = useState(true);
 
     const getAccessToken = async () => {
         try {
@@ -114,41 +117,49 @@ export default function ProfileScreen() {
         }
     }
 
+    const toggleMenu = () => {
+        setIsOpen(!isOpen);
+    };
+
 
     return (
-        <View style={styles.container}>
-            {user ? (
-                <>
-                    <View style={styles.formContainer}>
-                        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("User Data")}>
-                            <Icon name="user" size={20} color="white" style={styles.icon} />
-                            <Text style={styles.text}>See profile</Text>
-                        </TouchableOpacity>
+        <SafeAreaView style={{ flex: 1 }}>
+            <StatusBar backgroundColor="white" barStyle="dark-content" />
+            <Header title="Profile" icon="user" toggleMenu={toggleMenu}></Header>
+            <View style={styles.container}>
+                
+                    <>
+                    
+                        <View style={styles.formContainer}>
+                            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("User Data")}>
+                                <Icon name="user" size={20} color="white" style={styles.icon} />
+                                <Text style={styles.text}>See profile</Text>
+                            </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Edit Profile")}>
-                            <Icon name="edit" size={20} color="white" style={styles.icon} />
-                            <Text style={styles.text}>Edit profile</Text>
-                        </TouchableOpacity>
+                            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Edit Profile")}>
+                                <Icon name="edit" size={20} color="white" style={styles.icon} />
+                                <Text style={styles.text}>Edit profile</Text>
+                            </TouchableOpacity>
 
-                        <TouchableOpacity style={[styles.button, { backgroundColor: 'red' }]} onPress={() => handleLogout(username)}>
-                            <Icon name="sign-out-alt" size={20} color="white" style={styles.icon} />
-                            <Text style={styles.text}>Log Out</Text>
-                        </TouchableOpacity>
+                            <TouchableOpacity style={[styles.button, { backgroundColor: 'red' }]} onPress={() => handleLogout(username)}>
+                                <Icon name="sign-out-alt" size={20} color="white" style={styles.icon} />
+                                <Text style={styles.text}>Log Out</Text>
+                            </TouchableOpacity>
 
-                        <TouchableOpacity style={[styles.button, { backgroundColor: '#B22222' }]} onPress={deleteAccountAlert}>
-                            <Icon name="user" size={20} color="white" style={styles.icon} />
-                            <Text style={styles.text}>Delete account</Text>
-                        </TouchableOpacity>
+                            <TouchableOpacity style={[styles.button, { backgroundColor: '#B22222' }]} onPress={deleteAccountAlert}>
+                                <Icon name="user" size={20} color="white" style={styles.icon} />
+                                <Text style={styles.text}>Delete account</Text>
+                            </TouchableOpacity>
 
-                        <FloatingActionButton ></FloatingActionButton>
+                            <FloatingActionButton ></FloatingActionButton>
 
-                        <Menu></Menu>
-                    </View>
-                </>
-            ) : (
-                <Text>Profile page</Text>
-            )}
-        </View>
+                            <Menu></Menu>
+                        </View>
+                    </>
+                
+            </View>
+             <SideMenuAnimated isOpen={isOpen}></SideMenuAnimated>
+        </SafeAreaView>
 
 
     )

@@ -52,7 +52,7 @@ export const deleteTags = async (userId, tags) => {
     }
 };
 
-export const addExpense = async (userId, tags, amount, date, categoryId, AccountId, note) => {
+export const addExpense = async (userId, tags, amount, date, categoryId, AccountId, note, budget_id) => {
     try {
         const response = await axios.post(`${API_URL}/addExpense`,
             {
@@ -62,7 +62,8 @@ export const addExpense = async (userId, tags, amount, date, categoryId, Account
                 note,
                 category_id: categoryId,
                 account_id: AccountId,
-                tags
+                tags,
+                budget_id
             });
         return response.data;
     } catch (error) {
@@ -86,11 +87,11 @@ export const addIncome = async (userId, amount, date, accountId, note) => {
     }
 };
 
-export const addBudget = async ( id_user, name, amount, start_date, end_date, freq, note) => {
+export const addBudget = async ( id_user, name, amount, date, freq, note) => {
     try {
         const response = await axios.post(`${API_URL}/addBudget`,
             {
-                id_user, name, amount, start_date, end_date, freq, note
+                id_user, name, amount, date, freq, note
             });
         return response.data;
     } catch (error) {
@@ -100,13 +101,25 @@ export const addBudget = async ( id_user, name, amount, start_date, end_date, fr
 
 export const getBudgets = async (userId) => {
     try {
-        const response = await axios.get(`${API_URL}/getBudgets/${userId}`);
-        const budgetNames = response.data.map(item => item.name)
-            const options = budgetNames.map(item => ({
-                label: item,    // Valoarea va fi folosită atât pentru 'label' cât și pentru 'value'
-                value: item,    // Poți schimba acest lucru dacă vrei un alt tip de 'value'
+        const response = await axios.get(`${API_URL}/getBudgetsOptions/${userId}`);
+        // const budgetNames = response.data.map(item => item.name)
+            const options = response.data.map(item => ({
+                label: item.name,    // Valoarea va fi folosită atât pentru 'label' cât și pentru 'value'
+                value: item.name,    // Poți schimba acest lucru dacă vrei un alt tip de 'value'
+                name: item.name, 
+                idBudget: item.idbudgets
             }));
         return options; //un array cu obiecte bugete
+    } catch (error) {
+        console.error('Eroare la cererea GET tags:', error);
+    }
+};
+
+export const getBudgetsAll = async (userId, currentMonth, currentYear) => {
+    try {
+        const response = await axios.get(`${API_URL}/getBudgets/${userId}?month=${currentMonth}&year=${currentYear}`);
+        
+        return response.data; 
     } catch (error) {
         console.error('Eroare la cererea GET tags:', error);
     }

@@ -75,7 +75,7 @@ export default function FloatingActionButton() {
                 if(name == "bt_income")
                     navigation.navigate("Add income")
                 if(name == "bt_budget")
-                    navigation.navigate("Manage budgets")
+                    navigation.navigate("Create budget")
             }}
         />
     );

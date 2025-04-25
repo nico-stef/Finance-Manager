@@ -134,14 +134,12 @@ export default function FinancialRecords() {
     }
 
     const formatDate = (dateToFormat) => {
-        // console.log("formatata: ", dateToFormat)
         const date = new Date(dateToFormat);
         date.setHours(12);
-        return date.toLocaleDateString("ro-RO", {
+        return date.toLocaleDateString("ro-en", {
             day: 'numeric',
             month: 'long',
             year: 'numeric',
-            // timeZone: 'UTC'
         });
     };
 
@@ -176,7 +174,6 @@ export default function FinancialRecords() {
 
 
     const Record = ({ item }) => {
-
         return (
             <TouchableOpacity style={styles.cardRecord} onPress={() => { setModalRecordVisible(true); handleRecordClick(item) }}>
 
@@ -191,7 +188,6 @@ export default function FinancialRecords() {
 
                 {expenseOrIncome === 1 ? (<Text style={[styles.buttonText, { fontWeight: 'bold', color: "red"}]}>-${item.amount}</Text>) :
                     (<Text style={[styles.buttonText, { fontWeight: 'bold', color: "green" }]}>+${item.amount}</Text>)}
-
 
             </TouchableOpacity>
         )
@@ -211,10 +207,6 @@ export default function FinancialRecords() {
         Alert.alert('Success', "Record updated succesfully!");
     }
 
-    // useEffect(() => {
-    //     console.log(incomeRecords);
-    // }, [ incomeRecords]);
-
     //delete record
     const handleDeleteRecord = async () =>{
         if (expenseOrIncome === 1){
@@ -233,7 +225,7 @@ export default function FinancialRecords() {
         <SafeAreaView style={{ flex: 1 }}>
             <StatusBar backgroundColor="white" barStyle="dark-content" />
             <View style={{ flex: 1 }}>
-                <Header title="Records" icon="scroll" toggleMenu={toggleMenu}></Header>
+                <Header title="Transactions" icon="scroll" toggleMenu={toggleMenu}></Header>
                 <TopButtons setValue={setExpenseOrIncome}></TopButtons>
 
                 {/* --------modal pentru accounts------------- */}
@@ -257,7 +249,7 @@ export default function FinancialRecords() {
                         extraData={flatlistData}
                         renderItem={({ item }) => <Record item={item} />}
                         keyExtractor={item => item.idexpenses ? item.idexpenses : item.idincomes}
-                        initialNumToRender={expenseRecords.length}
+                        initialNumToRender={10}
                         contentContainerStyle={{ paddingBottom: 80 }}
                     />
 
@@ -429,8 +421,6 @@ export default function FinancialRecords() {
                     </View>
                 </Modal>
 
-
-
             </View>
 
             <Menu></Menu>
@@ -505,9 +495,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
 
     },
-
-
-
     accountButton: {
         marginTop: 10,
         alignItems: "center"
@@ -530,10 +517,7 @@ const styles = StyleSheet.create({
     },
     icon: {
         color: "black"
-        // marginHorizontal: 10,
     },
-
-
     centeredView: {
         fontFamily: 'serif',
         flex: 1,
@@ -576,7 +560,7 @@ const styles = StyleSheet.create({
     },
     buttonCloseCategories: {
         backgroundColor: '#16619a',
-        justifyContent: 'center',   // Aliniază vertical
+        justifyContent: 'center',
         alignItems: 'center',
     }
 })

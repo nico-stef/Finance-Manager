@@ -109,6 +109,18 @@ export default function AddExpense() {
     }, [modalVisible1]);
 
     useEffect(() => {
+        const getBudgetsAsync = async () => {
+            const response = await getBudgets(user.id);
+            setBudgetOptions(response);
+        };
+    
+        if (user?.id) {
+            getBudgetsAsync();
+        }
+    }, [user?.id]);
+    
+
+    useEffect(() => {
         const fetchAccounts = async () => {
             try {
                 const data = await getAccounts(user.id);
@@ -131,12 +143,6 @@ export default function AddExpense() {
                 setLoading(false);
             }
         }
-        
-        const getBudgetsAsync = async () => {
-            const response = await getBudgets(user.id);
-            setBudgetOptions(response);
-        };
-        getBudgetsAsync();
 
         if (modalVisible2) {
             fetchAccounts();
@@ -195,11 +201,10 @@ export default function AddExpense() {
 
     const handleAddExpense = async () => {
         const tagIds = selectedTags.map(item => item.idtags);
-
         if (!amount || !category || !account)
             Alert.alert("Warning", "You need to complete the necessary fields!");
         else {
-            await addExpense(user.id, tagIds, amount, date, category.idcategories, account.idaccounts, note);
+            await addExpense(user.id, tagIds, amount, date, category.idcategories, account.idaccounts, note, budget.idBudget);
             Alert.alert("Success", "Expense added successfully!");
         }
     }
@@ -283,9 +288,9 @@ export default function AddExpense() {
                             maxHeight={200}
                             labelField="label"
                             valueField="value"
-                            value={budget}
+                            value={budget.label}
                             onChange={item => {
-                                setBudget(item.value);
+                                setBudget(item);
                             }}
                         />
 

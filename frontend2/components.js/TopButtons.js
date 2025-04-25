@@ -17,12 +17,12 @@ export default function TopButtons({setValue}) {
         <View style={styles.pieOption}>
             <TouchableOpacity style={[styles.pieOptionsButton, { backgroundColor: selectedTab === 1 ? "white" : "#166055" }]} onPress={() => handleTabPress(1)}>
                 <Icon name="wallet" size={18} color={selectedTab === 1 ? 'black' : 'white'} style={styles.icon} />
-                <Text style={{ color: selectedTab === 1 ? 'black' : 'white' }}>view expenses</Text>
+                <Text style={{ color: selectedTab === 1 ? 'black' : 'white' }}>expenses</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.pieOptionsButton, { backgroundColor: selectedTab === 2 ? "white" : "#166055" }]} onPress={() => handleTabPress(2)}>
                 <Icon name="hand-holding-usd" size={18} color={selectedTab === 2 ? 'black' : 'white'} style={styles.icon} />
-                <Text style={{ color: selectedTab === 2 ? 'black' : 'white' }}>view income</Text>
+                <Text style={{ color: selectedTab === 2 ? 'black' : 'white' }}>earnings</Text>
             </TouchableOpacity>
         </View>
     )

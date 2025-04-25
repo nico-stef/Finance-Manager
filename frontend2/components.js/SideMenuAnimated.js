@@ -43,8 +43,24 @@ export default function SideMenuAnimated({isOpen}) {
                     <Text style={{ color: 'black', fontSize: 20, fontFamily: 'serif' }}>Home</Text>
                 </TouchableOpacity>
 
+                <TouchableOpacity style={{ marginTop: 20 }} onPress={() => navigation.navigate("SpendingPlanner")}>
+                    <Text style={{ color: 'black', fontSize: 20, fontFamily: 'serif' }}>Spending Planner</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={{ marginTop: 20 }} onPress={() => navigation.navigate("Charts")}>
+                    <Text style={{ color: 'black', fontSize: 20, fontFamily: 'serif' }}>Charts</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={{ marginTop: 20 }} onPress={() => navigation.navigate("BudgetPage")}>
+                    <Text style={{ color: 'black', fontSize: 20, fontFamily: 'serif' }}>Budget</Text>
+                </TouchableOpacity>
+
                 <TouchableOpacity style={{ marginTop: 20 }} onPress={() => navigation.navigate("FinancialRecords")}>
-                    <Text style={{ color: 'black', fontSize: 20, fontFamily: 'serif' }}>Financial Records</Text>
+                    <Text style={{ color: 'black', fontSize: 20, fontFamily: 'serif' }}>Transactions</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={{ marginTop: 20 }} onPress={() => navigation.navigate("Profile")}>
+                    <Text style={{ color: 'black', fontSize: 20, fontFamily: 'serif' }}>Profile</Text>
                 </TouchableOpacity>
             </View>
 

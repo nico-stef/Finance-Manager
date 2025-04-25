@@ -9,6 +9,8 @@ import { useNavigation } from '@react-navigation/native';
 import { addBudget } from '../APIs/moneyManagement';
 import { getUserData } from '../APIs/profile';
 import { Dropdown } from 'react-native-element-dropdown';
+import { MyModal } from '../components.js/myModal';
+import { months } from "../variables"
 
 export default function ManageBudgets() {
     const [nameBudget, setNameBudget] = useState('');
@@ -18,10 +20,8 @@ export default function ManageBudgets() {
     const [endDate, setEndDate] = useState(new Date());
     const [frequency, setFrequency] = useState(null);
     const frequencyOptions = [
-        { label: 'daily', value: '1' },
-        { label: 'weekly', value: '2' },
-        { label: 'monthly', value: '3' },
-        { label: 'yearly', value: '4' },
+        { label: 'only this month', value: '1' },
+        { label: 'recurrent every month', value: '2' },
     ];
     const [datePicker, setDatePicker] = useState(false);
     const [token, setAccessToken] = useState(null);
@@ -29,6 +29,8 @@ export default function ManageBudgets() {
     const [user, setUser] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(true);
     const navigation = useNavigation();
+    const [modalMonthCalendar, setModalMonthCalendar] = useState(false); //moddal calendar month
+    const [month, setMonth] = useState(''); //selected month
 
     const getAccessToken = async () => {
         try {
@@ -98,9 +100,22 @@ export default function ManageBudgets() {
         if (!amount || !nameBudget || !startDate || !endDate)
             Alert.alert("Warning", "You need to complete the necessary fields!");
         else {
-            await addBudget(user.id, nameBudget, amount, startDate, endDate, frequency, note);
+            console.log("luna:", month);
+            await addBudget(user.id, nameBudget, amount, month, frequency, note);
             Alert.alert("Success", "Budget added successfully!");
         }
+    }
+
+    const closeModal = (setModalVisibile) => {
+        return () => { //functie pe care o putem apela mai tarziu, nu imediat. fara return ar fi fost apelata imediat
+            setModalVisibile(false);
+        };
+    };
+
+    const handleMonth = (item) => {
+        console.log("luna or smth",item)
+        setMonth(item);
+        setModalMonthCalendar(false);
     }
 
     return (
@@ -123,59 +138,32 @@ export default function ManageBudgets() {
                         <Text style={styles.label}>Amount: </Text>
                         <TextInput style={styles.input} onChangeText={setAmount} value={amount} placeholder="type your amount" keyboardType="numeric" />
 
+                        {/* ------------modal pentru calendar MONTH------------- */}
+                        <MyModal
+                            visible={modalMonthCalendar} onClose={closeModal(setModalMonthCalendar)} title="Select the month"
+                            data={months} keyExtractor={(item) => item.id} onItemPress={handleMonth} nrCol={3} desc={true}
+                        />
+
                         {/* -------------picking the start date----------------- */}
                         <View style={styles.row}>
-                            <Text style={styles.label}>Start date: </Text>
-                            <TextInput style={[styles.input, { borderWidth: 0, fontSize: 16 }]} value={startDate ? startDate.toLocaleDateString() : ""} editable={false} />
+                            <Text style={styles.label}>Month:</Text>
+                            <TextInput style={[styles.input, { borderWidth: 0, fontSize: 16 }]} value={month ? month.name : ""} editable={false} />
                         </View>
+
                         <Pressable
                             style={[styles.button, styles.buttonOpen]}
-                            onPress={() => setDatePicker(true)}
+                            onPress={() => setModalMonthCalendar(true)}
                         >
-                            <Text style={styles.textStyle}>set start date</Text>
+                            <Text style={styles.textStyle}>choose month</Text>
                         </Pressable>
-                        {
-                            datePicker && (
-                                <DateTimePicker
-                                    mode={'date'}
-                                    is24Hour={true}
-                                    value={startDate || new Date()}
-                                    onChange={(event, selectedDate) => handleDateChange(event, selectedDate, setStartDate)}
-                                >
-                                </DateTimePicker>
-                            )
-                        }
 
-                        {/* -------------picking the end date----------------- */}
-                        <View style={styles.row}>
-                            <Text style={styles.label}>End date: </Text>
-                            <TextInput style={[styles.input, { borderWidth: 0, fontSize: 16 }]} value={endDate ? endDate.toLocaleDateString() : ""} editable={false} />
-                        </View>
-                        <Pressable
-                            style={[styles.button, styles.buttonOpen]}
-                            onPress={() => setDatePicker(true)}
-                        >
-                            <Text style={styles.textStyle}>set end date</Text>
-                        </Pressable>
-                        {
-                            datePicker && (
-                                <DateTimePicker
-                                    mode={'date'}
-                                    is24Hour={true}
-                                    value={startDate || new Date()}
-                                    onChange={(event, selectedDate) => handleDateChange(event, selectedDate, setEndDate)}
-                                >
-                                </DateTimePicker>
-                            )
-                        }
-
-                        {/* ---------------pick the note------------- */}
-                        <Text style={[styles.label, {paddingTop: 10}]}>Frequency: </Text>
+                        {/* ---------------pick the freq------------- */}
+                        <Text style={[styles.label, { paddingTop: 10 }]}>Frequency: </Text>
                         <Dropdown
                             data={frequencyOptions}
                             containerStyle={styles.dropdownContainer}
                             selectedTextStyle={[styles.input, { borderWidth: 0, fontSize: 16, marginStart: 20 }]}
-                            placeholderStyle={{marginStart: 20, paddingVertical: 10}}
+                            placeholderStyle={{ marginStart: 20, paddingVertical: 10 }}
                             placeholder='select frquency...'
                             maxHeight={200}
                             labelField="label"

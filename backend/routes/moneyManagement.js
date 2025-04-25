@@ -104,16 +104,16 @@ router.delete('/deleteTags', async (req, res) => {
 
 router.post('/addExpense', async (req, res) => {
 
-    const { id_user, amount, date, category_id, account_id, tags, note } = req.body;
+    const { id_user, amount, date, category_id, account_id, tags, note, budget_id } = req.body;
 
     if (!id_user || !amount || !date || !category_id || !account_id) {
         return res.status(400).json({ error: 'null fields!' });
     };
 
     //query introducere in tabelul expenses
-    const query1 = `INSERT INTO expenses (amount, date, note, category_id, account_id) VALUES(?, ?, ?, ?, ?);`;
+    const query1 = `INSERT INTO expenses (amount, date, note, category_id, account_id, budget_id) VALUES(?, ?, ?, ?, ?, ?);`;
     const dateExtracted = date.split('T')[0];
-    const data1 = [amount, dateExtracted, note, category_id, account_id];
+    const data1 = [amount, dateExtracted, note, category_id, account_id, budget_id];
 
     try {
         const result = await queryFunction(query1, data1);
@@ -139,7 +139,7 @@ router.post('/addExpense', async (req, res) => {
 //pentru tranzactie avem nevoie de 'mysql2/promise'
 const mysql = require('mysql2/promise');
 require('dotenv').config();
-const config ={
+const config = {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
@@ -158,15 +158,15 @@ router.post('/addIncome', async (req, res) => {
     const connection = await mysql.createConnection(config);
     await connection.beginTransaction();
     try {
-        const [result1] = await connection.query('INSERT INTO incomes SET ?', { amount: amount, date: dateExtracted, note: note, account_id});
-        
+        const [result1] = await connection.query('INSERT INTO incomes SET ?', { amount: amount, date: dateExtracted, note: note, account_id });
+
         const [result2] = await connection.query('SELECT total FROM accounts WHERE idaccounts = ?', [account_id]);
         //la un camp de tip DECIMAL, FLOAT sau DOUBLE, rezultatul poate fi returnat sub forma de string în JS,
         //mai ales daca sunt folosite librarii precum mysql sau mysql2
         const newTotal = parseFloat(result2[0].total) + parseFloat(amount);
 
         const [result3] = await connection.query('UPDATE accounts SET total = ? WHERE idaccounts = ?', [newTotal, account_id]);
-        
+
         await connection.commit();
         return res.status(200).json("Income succesfully added");
     } catch (err) {
@@ -182,17 +182,18 @@ router.post('/addIncome', async (req, res) => {
 
 router.post('/addBudget', async (req, res) => {
 
-    const { id_user, name, amount, start_date, end_date, freq, note } = req.body;
+    const { id_user, name, amount, date, freq, note } = req.body;
 
-    if (!id_user || !name || !amount || !start_date || !end_date) {
+    if (!id_user || !name || !amount || !date) {
         return res.status(400).json({ error: 'necessary fields null!' });
     };
 
-    const startDateExtracted = start_date.split('T')[0];
-    const endDateExtracted = end_date.split('T')[0];
+    let monthFormated = date.month.toString().padStart(2, '0');
+    let dateFormated = `${date.year}-${monthFormated}-01`;
+    console.log(dateFormated);
 
-    const query = `INSERT INTO budgets (name, amount, start_date, end_date, frequency, note, user_id) VALUES(?, ?, ?, ?, ?, ?, ?);`;
-    const data = [name, amount, startDateExtracted, endDateExtracted, freq, note, id_user];
+    const query = `INSERT INTO budgets (name, amount, month, frequency, note, user_id) VALUES(?, ?, ?, ?, ?, ?);`;
+    const data = [name, amount, dateFormated, freq, note, id_user];
 
     try {
         await queryFunction(query, data);
@@ -203,7 +204,7 @@ router.post('/addBudget', async (req, res) => {
     }
 });
 
-router.get('/getBudgets/:id_user', async (req, res) => {
+router.get('/getBudgetsOptions/:id_user', async (req, res) => {
 
     const { id_user } = req.params;
 
@@ -216,6 +217,30 @@ router.get('/getBudgets/:id_user', async (req, res) => {
     } catch (err) {
         console.error("Eroare la executarea interogării:", err);
         return res.status(500).json({ message: "error at getting categories" });
+    }
+
+});
+
+router.get('/getBudgets/:id_user', async (req, res) => {
+
+    const { id_user } = req.params;
+    const month = parseInt(req.query.month);
+    const year = parseInt(req.query.year);
+
+    const query1 = `SELECT b.idbudgets, b.name, b.amount, SUM(e.amount) AS total
+                  FROM budgets b
+                  LEFT JOIN expenses e ON e.budget_id = b.idbudgets AND MONTH(e.date) = ? AND YEAR(e.date) = ?
+                  WHERE b.user_id = ? AND (b.frequency = 2 OR (MONTH(b.month) = ? AND YEAR(b.month) = ?))
+                  GROUP BY b.idbudgets;`
+
+    const data = [month, year, id_user, month, year]
+
+    try {
+        const result = await queryFunction(query1, data);
+        return res.status(200).json(result);
+    } catch (err) {
+        console.error("Eroare la executarea interogării:", err);
+        return res.status(500).json({ message: "error at getting budgets" });
     }
 
 });

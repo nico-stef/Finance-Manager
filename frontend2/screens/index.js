@@ -9,3 +9,6 @@ export {default as AddIncome} from './AddIncome';
 export {default as ManageBudgets} from './ManageBudgets';
 export {default as Charts} from './Charts';
 export {default as FinancialRecords} from './FinancialRecords';
+export {default as BudgetPage} from './BudgetPage';
+export {default as SpendingPlanner} from './SpendingPlanner';
+export {default as CreateObjective} from './CreateObjective';
