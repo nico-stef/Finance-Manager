@@ -66,14 +66,14 @@ export default function SpendingPlanner() {
 
     const Record = ({ item }) => {
         return (
-            <TouchableOpacity style={styles.cardRecord}>
+            <TouchableOpacity style={styles.cardRecord} onPress={() => navigation.navigate('OptionsPage', {objectiveId: item.idObjective})}>
                 <View style={styles.infoContainer}>
                     <Text style={styles.nameText}>{item.name_objective}</Text>
-                    <Text style={styles.detailText}>Due date: {item.due_date ? new Date(item.due_date).toLocaleDateString("ro-EN", {
+                    {item.due_date && <Text style={styles.detailText}>Due date: {item.due_date ? new Date(item.due_date).toLocaleDateString("ro-EN", {
                                     day: 'numeric',
                                     month: 'long',
                                     year: 'numeric',
-                                }): ""}</Text>
+                                }): ""}</Text>}
                     <Text style={styles.detailText}>Amount: {item.amount_allocated} </Text>
                 </View>
 
@@ -84,14 +84,13 @@ export default function SpendingPlanner() {
         );
     };
 
-
     return (
         <SafeAreaView style={{ flex: 1 }}>
             <StatusBar backgroundColor="white" barStyle="dark-content" />
             <View style={{ flex: 1 }}>
                 <Header title="Spending Planner" icon="clipboard-list" toggleMenu={toggleMenu}></Header>
 
-                <View style={{ flex: 1, alignItems: 'center', marginTop: 20, backgroundColor: '#E8F5F2', }}>
+                <View style={{ flex: 1, alignItems: 'center', paddingTop: 20, backgroundColor: '#E8F5F2', }}>
 
                     <FlatList
                         data={objectives}

@@ -1,8 +1,8 @@
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import { LogInScreen, SignInScreen, ProfileScreen, HomeScreen, SeeProfile, EditProfile } from './screens';
-import { AddExpense, AddIncome, ManageBudgets, Charts, FinancialRecords, BudgetPage, SpendingPlanner, CreateObjective } from './screens';
+import { LogInScreen, SignInScreen, ProfileScreen, HomeScreen, SeeProfile, EditProfile, OptionsPage } from './screens';
+import { AddExpense, AddIncome, ManageBudgets, Charts, FinancialRecords, BudgetPage, SpendingPlanner, CreateObjective, CreateOption } from './screens';
 import HeaderPage from './components.js/HeaderPage'
 
 const Stack = createNativeStackNavigator();
@@ -12,6 +12,11 @@ function App() {
     <NavigationContainer>
       <Stack.Navigator>
       <Stack.Screen name="SpendingPlanner" component={SpendingPlanner} options={{ headerShown: false }}/>
+      <Stack.Screen name="OptionsPage" component={OptionsPage} options={{ headerShown: false }}/>
+      <Stack.Screen name="CreateOption" component={CreateOption} options={{ headerShown: false }}/>
+      
+      <Stack.Screen name="Edit Profile" component={EditProfile} options={{ headerShown: false }}/>
+      
       <Stack.Screen name="CreateObjective" component={CreateObjective} options={{ headerShown: false }}/>
       <Stack.Screen name="BudgetPage" component={BudgetPage} options={{ headerShown: false }}/>
       <Stack.Screen name="LogIn" component={LogInScreen} options={{ headerShown: false }}/>
@@ -22,11 +27,11 @@ function App() {
       <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }}/>
       
       <Stack.Screen name="User Data" component={SeeProfile}/>
-      <Stack.Screen name="Edit Profile" component={EditProfile}/>
+      
       <Stack.Screen name="Home" component={HomeScreen}/>
       <Stack.Screen name="Add expense" component={AddExpense}/>
       <Stack.Screen name="Add income" component={AddIncome}/>
-      <Stack.Screen name="Create budget" component={ManageBudgets}/>
+      <Stack.Screen name="Create budget" component={ManageBudgets} options={{ headerShown: false }}/>
       
       </Stack.Navigator>
     </NavigationContainer>

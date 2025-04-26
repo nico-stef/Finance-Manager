@@ -14,7 +14,7 @@ export default function Header({title, icon, toggleMenu}) {
             </TouchableOpacity>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text style={styles.text}>{title} </Text>
-                <Icon name={icon} size={24} color="white" />
+                <Icon name={icon} size={22} color="white" />
             </View>
             <Text></Text>
         </View>

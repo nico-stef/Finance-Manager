@@ -1,10 +1,14 @@
 import React from 'react';
 import { useEffect, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, SafeAreaView, StatusBar, KeyboardAvoidingView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
 import { getUserData, updateUser } from '../APIs/profile';
+import Icon from 'react-native-vector-icons/FontAwesome5';
+import Menu from '../components.js/Menu';
+import SideMenuAnimated from '../components.js/SideMenuAnimated';
+import Header from '../components.js/Header';
 
 function EditProfile() {
     const [name, setName] = useState('');
@@ -14,6 +18,11 @@ function EditProfile() {
     const [user, setUser] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(true);
     const navigation = useNavigation();
+    const [isOpen, setIsOpen] = useState(true);
+
+    const toggleMenu = () => {
+        setIsOpen(!isOpen);
+    };
 
     const getAccessToken = async () => {
         try {
@@ -73,36 +82,54 @@ function EditProfile() {
 
     }, [token, isLoggedIn])
 
-    const handleUpdate = async (username, name, phone, token) =>{
-        try{
+    const handleUpdate = async (username, name, phone, token) => {
+        try {
             await updateUser(username, name, phone, token);
             Alert.alert('Success', 'User data updated sucessfully!');
-        }catch(error){
+        } catch (error) {
             console.error("Eroare la user update:", error);
         }
     }
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Hello, {username}</Text>
-            <Text style={styles.label}>Name: </Text>
-            <TextInput
-                style={styles.input}
-                onChangeText={setName}
-                value={name}
-            />
-            <Text style={styles.label}>Phone number: </Text>
-            <TextInput
-                style={styles.input}
-                onChangeText={setPhone}
-                value={phone}
-                keyboardType="phone-pad"
+        <SafeAreaView style={{ flex: 1 }}>
+            <KeyboardAvoidingView
+                behavior="height"
+                style={{ flex: 1 }}
+            >
+                <StatusBar backgroundColor="white" barStyle="dark-content" />
+                <View style={{ flex: 1, backgroundColor: 'white', }}>
+                    <Header title="Edit Profile" icon="user" toggleMenu={toggleMenu}></Header>
 
-            />
-            <TouchableOpacity style={styles.button} onPress={() => handleUpdate(username, name, phone, token)}>
-                <Text style={styles.text}>Save changes</Text>
-            </TouchableOpacity>
-        </View>
+                    {/* <Text style={styles.title}>Hello, {username}</Text> */}
+
+                    <View style={styles.container}>
+
+                        <Text style={styles.label}>NAME: </Text>
+                        <TextInput
+                            style={styles.input}
+                            onChangeText={setName}
+                            value={name}
+                        />
+                        <Text style={styles.label}>PHONE NUMBER: </Text>
+                        <TextInput
+                            style={styles.input}
+                            onChangeText={setPhone}
+                            value={phone}
+                            keyboardType="phone-pad"
+
+                        />
+                        <TouchableOpacity style={styles.button} onPress={() => handleUpdate(username, name, phone, token)}>
+                            <Text style={styles.text}>Save changes</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                <Menu></Menu>
+
+                <SideMenuAnimated isOpen={isOpen}></SideMenuAnimated>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     )
 }
 
@@ -110,41 +137,46 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#E8F5F2',
         padding: 20,
+        // transform: [{ translateY: -20 }]
     },
     title: {
-        marginBottom: 20,
-        fontSize: 20,
-        fontWeight: 'bold'
+        fontSize: 24,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        backgroundColor: 'white',
     },
     label: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: 'bold',
-        color: '#333',
+        color: '#666',
+        fontFamily: 'Arial',
         marginBottom: 5,
     },
     input: {
         backgroundColor: '#fff',
-        width: '80%',
+        width: '80%', // 80% din lățimea containerului
         height: 50,
         paddingHorizontal: 15,
         marginBottom: 20,
         fontSize: 16,
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 10,
+        borderBottomWidth: 1.2,
+        borderBottomColor: '#ccc',
+        marginHorizontal: 'auto',
+        backgroundColor: 'transparent'
     },
     button: {
-        backgroundColor: '#25a18e',
-        paddingVertical: 12,
+        width: '80%',
+        alignSelf: 'center',
         borderRadius: 12,
-        width: '50%',
-        alignItems: 'center',
-        marginVertical: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        elevation: 4,
         flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor: '#16619a',
     },
     text: {
         color: '#fff',

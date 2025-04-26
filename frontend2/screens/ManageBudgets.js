@@ -1,7 +1,7 @@
 import React from 'react';
 import { useEffect, useState } from "react";
 import { View, Text, TextInput, FlatList, StyleSheet, Modal, Pressable, Alert } from 'react-native';
-import { KeyboardAvoidingView, ScrollView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, Platform, TouchableWithoutFeedback, Keyboard, SafeAreaView, StatusBar, } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
@@ -11,6 +11,9 @@ import { getUserData } from '../APIs/profile';
 import { Dropdown } from 'react-native-element-dropdown';
 import { MyModal } from '../components.js/myModal';
 import { months } from "../variables"
+import Menu from '../components.js/Menu';
+import SideMenuAnimated from '../components.js/SideMenuAnimated';
+import Header from '../components.js/Header';
 
 export default function ManageBudgets() {
     const [nameBudget, setNameBudget] = useState('');
@@ -31,6 +34,11 @@ export default function ManageBudgets() {
     const navigation = useNavigation();
     const [modalMonthCalendar, setModalMonthCalendar] = useState(false); //moddal calendar month
     const [month, setMonth] = useState(''); //selected month
+    const [isOpen, setIsOpen] = useState(true);
+
+    const toggleMenu = () => {
+        setIsOpen(!isOpen);
+    };
 
     const getAccessToken = async () => {
         try {
@@ -113,84 +121,95 @@ export default function ManageBudgets() {
     };
 
     const handleMonth = (item) => {
-        console.log("luna or smth",item)
+        console.log("luna or smth", item)
         setMonth(item);
         setModalMonthCalendar(false);
     }
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === "height"}
-            style={{ flex: 1 }}
-        >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <ScrollView
-                    contentContainerStyle={{ flexGrow: 1 }}
-                    keyboardShouldPersistTaps="handled"
-                >
-                    <View style={styles.container}>
+        <SafeAreaView style={{ flex: 1 }}>
+            <StatusBar backgroundColor="white" barStyle="dark-content" />
+            <KeyboardAvoidingView
+                behavior="height"
+                style={{ flex: 1 }}
 
-                        {/* ----------------pick the name------------------- */}
-                        <Text style={styles.label}>Name of your budget: </Text>
-                        <TextInput style={styles.input} onChangeText={setNameBudget} value={nameBudget} placeholder="type the name" />
+            >
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                    <ScrollView
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        keyboardShouldPersistTaps="handled"
+                    >
+                        <Header title="Spending Planner" icon="clipboard-list" toggleMenu={toggleMenu}></Header>
+                        <View style={styles.container}>
 
-                        {/* ----------------pick the amount------------------- */}
-                        <Text style={styles.label}>Amount: </Text>
-                        <TextInput style={styles.input} onChangeText={setAmount} value={amount} placeholder="type your amount" keyboardType="numeric" />
+                            {/* ----------------pick the name------------------- */}
+                            <Text style={styles.label}>Name of your budget: </Text>
+                            <TextInput style={[styles.input, { backgroundColor: 'white' }]} onChangeText={setNameBudget} value={nameBudget} placeholder="type the name" />
 
-                        {/* ------------modal pentru calendar MONTH------------- */}
-                        <MyModal
-                            visible={modalMonthCalendar} onClose={closeModal(setModalMonthCalendar)} title="Select the month"
-                            data={months} keyExtractor={(item) => item.id} onItemPress={handleMonth} nrCol={3} desc={true}
-                        />
+                            {/* ----------------pick the amount------------------- */}
+                            <Text style={styles.label}>Amount: </Text>
+                            <TextInput style={[styles.input, { backgroundColor: 'white' }]} onChangeText={setAmount} value={amount} placeholder="type your amount" keyboardType="numeric" />
 
-                        {/* -------------picking the start date----------------- */}
-                        <View style={styles.row}>
-                            <Text style={styles.label}>Month:</Text>
-                            <TextInput style={[styles.input, { borderWidth: 0, fontSize: 16 }]} value={month ? month.name : ""} editable={false} />
+                            {/* ------------modal pentru calendar MONTH------------- */}
+                            <MyModal
+                                visible={modalMonthCalendar} onClose={closeModal(setModalMonthCalendar)} title="Select the month"
+                                data={months} keyExtractor={(item) => item.id} onItemPress={handleMonth} nrCol={3} desc={true}
+                            />
+
+                            {/* -------------picking the start date----------------- */}
+                            <View style={styles.row}>
+                                <Text style={styles.label}>Month:</Text>
+                                <TextInput style={[styles.input, { borderWidth: 0, fontSize: 16 }]} value={month ? month.name : ""} editable={false} />
+                            </View>
+
+                            <Pressable
+                                style={[styles.button, styles.buttonOpen]}
+                                onPress={() => setModalMonthCalendar(true)}
+                            >
+                                <Text style={styles.textStyle}>choose month</Text>
+                            </Pressable>
+
+                            {/* ---------------pick the freq------------- */}
+                            <Text style={[styles.label, { paddingTop: 10 }]}>Frequency: </Text>
+                            <Dropdown
+                                data={frequencyOptions}
+                                containerStyle={styles.dropdownContainer}
+                                selectedTextStyle={[styles.input, { borderWidth: 0, fontSize: 14, marginStart: 20 }]}
+                                placeholderStyle={{ marginStart: 20, paddingVertical: 10}}
+                                placeholder='select frquency...'
+                                maxHeight={100}
+                                labelField="label"
+                                valueField="value"
+                                value={frequency}
+                                onChange={item => {
+                                    setFrequency(item.value);
+                                }}
+                                style={{
+                                    backgroundColor: '#fff', borderRadius: 8, width: '90%', alignSelf: 'center', marginTop: 3
+                                }}
+                            />
+
+                            {/* ---------------pick the note------------- */}
+                            <Text style={styles.label}>Note: </Text>
+                            <TextInput style={[styles.input, { backgroundColor: 'white' }]} onChangeText={setNote} value={note} placeholder="write a note" />
+
+
+                            <Pressable
+                                style={[styles.button, styles.buttonClose, { marginTop: 40 }]}
+                                onPress={() => handleCreateBudget()}
+                                android_ripple={{ color: 'white' }}
+                            >
+                                <Text style={styles.textStyle}>create budget</Text>
+                            </Pressable>
+
                         </View>
+                        <Menu></Menu>
 
-                        <Pressable
-                            style={[styles.button, styles.buttonOpen]}
-                            onPress={() => setModalMonthCalendar(true)}
-                        >
-                            <Text style={styles.textStyle}>choose month</Text>
-                        </Pressable>
-
-                        {/* ---------------pick the freq------------- */}
-                        <Text style={[styles.label, { paddingTop: 10 }]}>Frequency: </Text>
-                        <Dropdown
-                            data={frequencyOptions}
-                            containerStyle={styles.dropdownContainer}
-                            selectedTextStyle={[styles.input, { borderWidth: 0, fontSize: 16, marginStart: 20 }]}
-                            placeholderStyle={{ marginStart: 20, paddingVertical: 10 }}
-                            placeholder='select frquency...'
-                            maxHeight={200}
-                            labelField="label"
-                            valueField="value"
-                            value={frequency}
-                            onChange={item => {
-                                setFrequency(item.value);
-                            }}
-                        />
-
-                        {/* ---------------pick the note------------- */}
-                        <Text style={styles.label}>Note: </Text>
-                        <TextInput style={styles.input} onChangeText={setNote} value={note} placeholder="write a note" />
-
-
-                        <Pressable
-                            style={[styles.button, styles.buttonClose, { marginTop: 40 }]}
-                            onPress={() => handleCreateBudget()}
-                            android_ripple={{ color: 'white' }}
-                        >
-                            <Text style={styles.textStyle}>create budget</Text>
-                        </Pressable>
-
-                    </View>
-                </ScrollView>
-            </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+                        <SideMenuAnimated isOpen={isOpen}></SideMenuAnimated>
+                    </ScrollView>
+                </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     )
 }
 
@@ -273,13 +292,15 @@ const styles = StyleSheet.create({
 
     },
     button: {
-        width: '70%',
+        width: '80%',
         alignSelf: 'center',
-        borderColor: 'black',
-        borderWidth: 1,
-        borderRadius: 20,
-        padding: 10,
-        elevation: 5,
+        borderRadius: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        elevation: 4,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     buttonOpen: {
         backgroundColor: '#25a18e',

@@ -93,7 +93,7 @@ export default function LogInScreen() {
                 <>
                     <Image source={LoginImage} style={styles.image} />
 
-                    <Text style={styles.title}>LogIn</Text>
+                    <Text style={styles.title}>Login</Text>
 
                     <View style={styles.inputContainer}>
                         <Icon name="user-circle" size={20} color="#333" style={styles.icon} />

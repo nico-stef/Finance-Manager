@@ -50,4 +50,41 @@ router.get("/getObjectives", authenticateToken, async (req, res) => {
 
 });
 
+
+//options
+const multer  = require('multer')
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, 'images/')
+    },
+    filename: function (req, file, cb) {
+      cb(null, file.originalname)
+    }
+  })
+  const upload = multer({ storage })
+
+router.post('/addOption', upload.single('photo'), async (req, res) => {
+
+    const imagePath = req?.file?.path;
+    const { name, price, note, objectiveId } = req.body;
+
+    if (!price || !name || !objectiveId) {
+        return res.status(400).json({ message: 'necessary fields null!' });
+    };
+
+    const query = `INSERT INTO options (name_option, price, imagePath, note, objective_id) 
+                   VALUES(?, ?, ?, ?, ?);`;
+    const data = [name, price, imagePath, note, objectiveId];
+
+    try {
+        const result = await queryFunction(query, data);
+        return res.status(200).json({message: 'Option added successfully!'});
+    } catch (err) {
+        console.error("Eroare la executarea interogării:", err);
+        return res.status(500).json({ message: "error at posting option" });
+    }
+
+});
+
+
 module.exports = router;

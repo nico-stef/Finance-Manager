@@ -66,7 +66,7 @@ export default function BudgetPage() {
         const currentMonth = month ? month.month : date.getMonth() + 1; // 0=ianuarie => adaugam 1
         const currentYear = month ? month.year : date.getFullYear();
         console.log(currentMonth, currentYear)
-        
+
         getBudgetsAll(userid, currentMonth, currentYear)
             .then((data) => { setBudgets(data) })
             .catch((err) => console.error(err));
@@ -99,24 +99,26 @@ export default function BudgetPage() {
 
     const Record = ({ item }) => {
         return (
-            <TouchableOpacity style={styles.cardRecord}>
+            <View style={styles.cardRecordBig}>
+                <TouchableOpacity style={styles.cardRecord}>
 
-                <View style={{ flexDirection: 'row', alignItems: 'center', width: '50%' }}>
-                    <Text style={[styles.buttonTextRecord, { fontWeight: 'bold', marginLeft: 20 }]}>{item.name}</Text>
-                </View>
-                <Text style={[styles.buttonTextRecord]}>{item.total ? (item.total.endsWith('.00') ? parseFloat(item.total).toFixed(0) : item.total) : `0`}/{item.amount.endsWith('.00') ? parseFloat(item.amount).toFixed(0) : item.amount}</Text>
-                <View>
-                    <Icon name="edit" size={18} style={styles.icon} />
-                </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', width: '50%' }}>
+                        <Text style={[styles.buttonTextRecord, { fontWeight: 'bold', marginLeft: 20 }]}>{item.name}</Text>
+                    </View>
+                    <Text style={[styles.buttonTextRecord]}>{item.total ? (item.total.endsWith('.00') ? parseFloat(item.total).toFixed(0) : item.total) : `0`}/{item.amount.endsWith('.00') ? parseFloat(item.amount).toFixed(0) : item.amount}</Text>
+                    <Icon name="arrow-right" size={20} style={styles.icon} />
 
-            </TouchableOpacity>
+                </TouchableOpacity>
+                <Progress.Bar progress={parseFloat(item.total)/parseFloat(item.amount)} width={null} style={{ width: '90%', alignSelf: 'center' }} color='#69C0FF' />
+            </View>
+
         )
     };
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
             <StatusBar backgroundColor="white" barStyle="dark-content" />
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, backgroundColor: '#E8F5F2' }}>
                 <Header title="Budget" icon="piggy-bank" toggleMenu={toggleMenu}></Header>
 
                 <View style={{ flex: 1, alignItems: 'center' }}>
@@ -131,7 +133,7 @@ export default function BudgetPage() {
                         <Text style={[styles.buttonText, { fontSize: 18, marginLeft: 6, marginTop: 10 }]}>Available budget for {month ? month.name : date.toLocaleString('en-US', { month: 'long' })} {/*{date.toLocaleString('en-US', { month: 'long' })}*/}: </Text>
 
                         <View style={{ alignItems: 'center' }}>
-                            <Text style={[styles.buttonText, { fontSize: 20 }]}>${budgetThisMonth - budgetSpent} </Text>
+                            <Text style={[styles.buttonText, { fontSize: 20 }]}>${budgetThisMonth - budgetSpent} out of ${budgetThisMonth} </Text>
                         </View>
 
                         <Progress.Bar progress={progress} width={null} />
@@ -209,22 +211,24 @@ const styles = StyleSheet.create({
         alignContent: 'center',
         width: '98%',
         alignSelf: 'center',
-        paddingVertical: 16,
-        minHeight: 70,
+        minHeight: 60,
         backgroundColor: "#fff",
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: "space-between",
-        marginTop: 10,
-        paddingHorizontal: 15,
+        // backgroundColor: 'pink'
+    },
+    cardRecordBig: {
+        backgroundColor: '#fff',
         borderRadius: 10,
-        padding: 10,
         elevation: 3,
         borderWidth: 0.5,
         borderColor: 'grey',
+        marginTop: 10,
+        padding: 10,
     },
     icon: {
-        color: "black",
+        color: 'black',
         fontWeight: 'normal'
     },
     buttonTextRecord: {

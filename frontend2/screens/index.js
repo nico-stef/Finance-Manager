@@ -12,3 +12,5 @@ export {default as FinancialRecords} from './FinancialRecords';
 export {default as BudgetPage} from './BudgetPage';
 export {default as SpendingPlanner} from './SpendingPlanner';
 export {default as CreateObjective} from './CreateObjective';
+export {default as OptionsPage} from './OptionsPage';
+export {default as CreateOption} from './CreateOption';
