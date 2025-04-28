@@ -7,3 +7,4 @@
 [] sa adaug selectarea bugetului la pagina expenses
 [] crearea de accounts
 [] cand sterg income, sa sterg si din totalul din account pe backend
+[] sa fac update la SeeOption

@@ -10,6 +10,8 @@ import { getAccounts, getBudgets } from '../APIs/moneyManagement';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Dropdown } from 'react-native-element-dropdown';
 import { addObjective } from '../APIs/spendingPlanner';
+import { months } from "../variables"
+import { getCategories } from '../APIs/moneyManagement';
 
 export default function CreateObjective({ route }) {
 
@@ -21,7 +23,6 @@ export default function CreateObjective({ route }) {
     const [note, setNote] = useState('');
     const [startDate, setStartDate] = useState(new Date());
     const [datePicker, setDatePicker] = useState(false);
-    const [modalMonthCalendar, setModalMonthCalendar] = useState(false); //moddal calendar month
     const [month, setMonth] = useState(''); //selected month
     const [date, setDate] = useState(new Date());
     const [modalAccountVisible, setModalAccountVisible] = useState(false); //account 
@@ -30,6 +31,9 @@ export default function CreateObjective({ route }) {
     const [account, setAccount] = useState('');
     const [budgetOptions, setBudgetOptions] = useState([]);
     const [budget, setBudget] = useState('');
+    const [categories, setCategories] = useState('');
+    const [category, setCategory] = useState('');
+    const [modalCategory, setModalCategory] = useState(false);
 
     const toggleMenu = () => {
         setIsOpen(!isOpen);
@@ -88,9 +92,9 @@ export default function CreateObjective({ route }) {
 
     const handleAddObjective = async () => {
         try {
-            if (!nameObjective || !amount || !account)
+            if (!nameObjective || !amount || !account || !category)
                 Alert.alert('Warning', "You haven't completed necessary fields!");
-            const response = await addObjective(nameObjective, amount, date, account.idaccounts, budget.idBudget, note, userId);
+            const response = await addObjective(nameObjective, amount, date, account.idaccounts, budget.idBudget, note, userId, category.idcategories);
             if (response === 200) {
                 Alert.alert('Success', "Objective successfully created!");
                 setNameObjective("");
@@ -105,10 +109,31 @@ export default function CreateObjective({ route }) {
         }
     }
 
-    // useEffect(() => {
-    //     console.log("id userrr: ", budgetOptions)
-    // }, [budgetOptions]);
+    useEffect(() => {
+        const getCategoriesAsync = async () => {
 
+            const data = await getCategories();
+            const newArray = data.map(item => ({
+                name: item.category, //category va avea name ca sa putem itera prin el cu componenta MyModal
+                icon: item.icon,
+                idcategories: item.idcategories
+              }));
+            setCategories(newArray);
+
+        };
+        if (modalCategory) {
+            getCategoriesAsync();
+        }
+    }, [modalCategory]);
+
+    const handleCategory = (category) => {
+        setCategory(category);
+        setModalCategory(false)
+    }
+
+    // useEffect(() => {
+    //     console.log("id userrr: ", categories)
+    // }, [categories]);
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
@@ -116,22 +141,21 @@ export default function CreateObjective({ route }) {
             <KeyboardAvoidingView
                 behavior="height"
                 style={{ flex: 1 }}
-                
+
             >
                 <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
                     <View style={{ flex: 1 }}>
-                        <Header title="Spending Planner" icon="clipboard-list" toggleMenu={toggleMenu}></Header>
-
+                        {/* <Header title="Spending Planner" icon="clipboard-list" toggleMenu={toggleMenu}></Header> */}
 
                         <View style={styles.container}>
 
                             {/* ----------------pick the name------------------- */}
                             <Text style={styles.label}>Name of your objective*: </Text>
-                            <TextInput style={[styles.input, {backgroundColor: 'white'}]} onChangeText={setNameObjective} value={nameObjective} placeholder="type the name" />
+                            <TextInput style={[styles.input, { backgroundColor: 'white' }]} onChangeText={setNameObjective} value={nameObjective} placeholder="type the name" />
 
                             {/* ----------------pick the amount------------------- */}
                             <Text style={styles.label}>Amount allocated*: </Text>
-                            <TextInput style={[styles.input, {backgroundColor: 'white'}]} onChangeText={setAmount} value={amount} placeholder="type your amount" keyboardType="numeric" />
+                            <TextInput style={[styles.input, { backgroundColor: 'white' }]} onChangeText={setAmount} value={amount} placeholder="type your amount" keyboardType="numeric" />
 
                             {/* -------------picking the date----------------- */}
                             <View style={styles.row}>
@@ -171,6 +195,17 @@ export default function CreateObjective({ route }) {
                                 <Text style={styles.textStyle}>choose account</Text>
                             </Pressable>
 
+                            {/* ---------------pick the category------------- */}
+                            <View style={styles.row}>
+                                <Text style={styles.label}>Category*: </Text>
+                                <TextInput style={[styles.input, { borderWidth: 0, fontSize: 16 }]} value={category.name} editable={false} />
+                            </View>
+                            <Pressable
+                                style={[styles.button, styles.buttonOpen]}
+                                onPress={() => setModalCategory(true)}>
+                                <Text style={styles.textStyle}>choose category</Text>
+                            </Pressable>
+
                             {/* ---------------pick the budget------------- */}
                             <View style={styles.row}>
                                 <Text style={styles.label}>Budget: </Text>
@@ -184,7 +219,7 @@ export default function CreateObjective({ route }) {
 
                             {/* ---------------pick the note------------- */}
                             <Text style={styles.label}>Note: </Text>
-                            <TextInput style={[styles.input, {backgroundColor: 'white'}]} onChangeText={setNote} value={note} placeholder="write a note" />
+                            <TextInput style={[styles.input, { backgroundColor: 'white' }]} onChangeText={setNote} value={note} placeholder="write a note" />
 
                             <Pressable
                                 style={[styles.button, styles.buttonClose, { marginTop: 20 }]}
@@ -203,6 +238,12 @@ export default function CreateObjective({ route }) {
                             <MyModal
                                 visible={modalAccountVisible} onClose={closeModal(setModalAccountVisible)} title="Select the account"
                                 data={accounts} keyExtractor={(item) => item.idaccounts} onItemPress={handleAccount} nrCol={2}
+                            />
+
+                            {/* ------------modal pentru category------------- */}
+                            <MyModal
+                                visible={modalCategory} onClose={closeModal(setModalCategory)} title="Select the month"
+                                data={categories} keyExtractor={(item) => item.idcategories} onItemPress={handleCategory} nrCol={3} desc={true}
                             />
 
                         </View>
@@ -243,7 +284,7 @@ const styles = StyleSheet.create({
         flex: 1,
         marginBottom: '10%',
         alignContent: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
     },
     dropdownContainer: {
         backgroundColor: '#f8f9fa',
@@ -266,7 +307,7 @@ const styles = StyleSheet.create({
     label: {
         fontFamily: 'serif',
         marginStart: 20,
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: 'bold'
     },
     centeredView: {
@@ -306,20 +347,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 10,
     },
-    buttonIncome: {
-        width: '40%',
-        marginHorizontal: 20,
-        paddingVertical: 2,
-        borderRadius: 10,
-        alignContent: 'center',
-        justifyContent: 'center',
-
-    },
     button: {
         width: '80%',
         alignSelf: 'center',
         borderRadius: 12,
-        paddingVertical: 10,
+        paddingVertical: 8,
         paddingHorizontal: 20,
         elevation: 4,
         flexDirection: 'row',

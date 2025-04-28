@@ -4,6 +4,7 @@ const app = express();
 const connection = require('./database');
 const port = 3000;
 const jwt = require('jsonwebtoken');
+const path = require('path');
 
 
 //configuram rutele importand fisierul de rute
@@ -43,6 +44,8 @@ app.post('/token', (req, res) => {
 
   });
 });
+
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.listen(port, () => {
   console.log(`app listening at http://localhost:${port}`);

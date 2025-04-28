@@ -14,3 +14,4 @@ export {default as SpendingPlanner} from './SpendingPlanner';
 export {default as CreateObjective} from './CreateObjective';
 export {default as OptionsPage} from './OptionsPage';
 export {default as CreateOption} from './CreateOption';
+export {default as SeeOption} from './SeeOption';

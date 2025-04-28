@@ -1,6 +1,6 @@
 import React from 'react'
-import { useState, useEffect, useRef } from "react";
-import { useNavigation } from '@react-navigation/native';
+import { useState, useEffect, useCallback } from "react";
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, FlatList, Modal, Pressable, TextInput, Alert } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
@@ -50,30 +50,37 @@ export default function SpendingPlanner() {
     }, []);
 
     //get objectives
-    useEffect(() => {
-        const getObjectivesAsync = async () => {
-            if (token) {
-                const data = await getObjectives(token);
-                setObjectives(data);
-            }
-        };
-        getObjectivesAsync();
-    }, [token]);
+    const getObjectivesAsync = async () => {
+        if (token) {
+            const data = await getObjectives(token);
+            setObjectives(data);
+        }
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            getObjectivesAsync();
+        }, [token])
+    );
 
     const toggleMenu = () => {
         setIsOpen(!isOpen);
     };
 
+    // useEffect(() => {
+    //     console.log("objective: ", objectives)
+    // }, [objectives]);
+
     const Record = ({ item }) => {
         return (
-            <TouchableOpacity style={styles.cardRecord} onPress={() => navigation.navigate('OptionsPage', {objectiveId: item.idObjective})}>
+            <TouchableOpacity style={styles.cardRecord} onPress={() => navigation.navigate('OptionsPage', { objectiveId: item.idObjective })}>
                 <View style={styles.infoContainer}>
                     <Text style={styles.nameText}>{item.name_objective}</Text>
                     {item.due_date && <Text style={styles.detailText}>Due date: {item.due_date ? new Date(item.due_date).toLocaleDateString("ro-EN", {
-                                    day: 'numeric',
-                                    month: 'long',
-                                    year: 'numeric',
-                                }): ""}</Text>}
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                    }) : ""}</Text>}
                     <Text style={styles.detailText}>Amount: {item.amount_allocated} </Text>
                 </View>
 

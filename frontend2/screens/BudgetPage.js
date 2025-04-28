@@ -178,6 +178,10 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         flexDirection: 'column',   // Pune elementele pe verticală
         justifyContent: 'space-between',
+        borderRadius: 10,
+        padding: 10,
+        elevation: 5,
+        backgroundColor: 'white', 
     },
     viewPreviousBudgets: {
         flexDirection: 'row',

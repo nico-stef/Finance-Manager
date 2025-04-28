@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-native-community/checkbox": "^0.5.17",
     "@react-native-community/datetimepicker": "8.2.0",
     "@react-native-masked-view/masked-view": "0.3.2",
     "@react-native-picker/picker": "2.9.0",
@@ -28,6 +29,7 @@
     "expo-media-library": "~17.0.6",
     "expo-permissions": "^14.4.0",
     "expo-random": "^14.0.1",
+    "expo-sharing": "~13.0.1",
     "expo-status-bar": "~2.0.1",
     "expo-web-browser": "~14.0.2",
     "jwt-decode": "^4.0.0",
@@ -48,7 +50,7 @@
     "react-native-screens": "~4.4.0",
     "react-native-svg": "15.8.0",
     "react-native-vector-icons": "^10.2.0",
-    "expo-sharing": "~13.0.1"
+    "expo-checkbox": "~4.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

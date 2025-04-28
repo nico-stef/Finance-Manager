@@ -1,7 +1,7 @@
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import { LogInScreen, SignInScreen, ProfileScreen, HomeScreen, SeeProfile, EditProfile, OptionsPage } from './screens';
+import { LogInScreen, SignInScreen, ProfileScreen, HomeScreen, SeeProfile, EditProfile, OptionsPage, SeeOption } from './screens';
 import { AddExpense, AddIncome, ManageBudgets, Charts, FinancialRecords, BudgetPage, SpendingPlanner, CreateObjective, CreateOption } from './screens';
 import HeaderPage from './components.js/HeaderPage'
 
@@ -13,6 +13,7 @@ function App() {
       <Stack.Navigator>
       <Stack.Screen name="SpendingPlanner" component={SpendingPlanner} options={{ headerShown: false }}/>
       <Stack.Screen name="OptionsPage" component={OptionsPage} options={{ headerShown: false }}/>
+      <Stack.Screen name="SeeOption" component={SeeOption} options={{ headerShown: false }}/>
       <Stack.Screen name="CreateOption" component={CreateOption} options={{ headerShown: false }}/>
       
       <Stack.Screen name="Edit Profile" component={EditProfile} options={{ headerShown: false }}/>

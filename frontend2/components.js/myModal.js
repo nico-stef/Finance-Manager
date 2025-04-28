@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderRadius: 10,
         padding: 20,
-        width: '90%',
+        width: '94%',
         maxHeight: 500,
     },
     modalTitle: {
