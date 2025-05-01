@@ -110,26 +110,32 @@ router.post('/addExpense', async (req, res) => {
         return res.status(400).json({ error: 'null fields!' });
     };
 
-    //query introducere in tabelul expenses
-    const query1 = `INSERT INTO expenses (amount, date, note, category_id, account_id, budget_id) VALUES(?, ?, ?, ?, ?, ?);`;
-    const dateExtracted = date.split('T')[0];
-    const data1 = [amount, dateExtracted, note, category_id, account_id, budget_id];
-
+    const connection = await mysql.createConnection(config);
+    await connection.beginTransaction();
     try {
-        const result = await queryFunction(query1, data1);
-        const insertedId = result.insertId;
+        const dateExtracted = date.split('T')[0];
+        const data1 = [amount, dateExtracted, note, category_id, account_id, budget_id];
+        await connection.query(`INSERT INTO expenses (amount, date, note, category_id, account_id, budget_id) VALUES(?, ?, ?, ?, ?, ?);`, data1);
 
-        //query introducere in tabelul expenses_tags
-        if (tags.length > 0) {
-            const query2 = `INSERT INTO expenses_tags (expense_id, tag_id) VALUES ?;`;
-            const data2 = tags.map(tag => [insertedId, tag])
-            await queryFunction(query2, [data2]);
+        const [result2] = await connection.query('SELECT total FROM accounts WHERE idaccounts = ?', [account_id]);
+        //la un camp de tip DECIMAL, FLOAT sau DOUBLE, rezultatul poate fi returnat sub forma de string în JS,
+        //mai ales daca sunt folosite librarii precum mysql sau mysql2
+        const newTotal = parseFloat(result2[0].total) - parseFloat(amount);
+
+        if(newTotal < 0){
+            await connection.rollback();
+            return res.status(400).json("Insufficient funds!");
         }
 
+        await connection.query('UPDATE accounts SET total = ? WHERE idaccounts = ?', [newTotal, account_id]);
+
+        await connection.commit();
         return res.status(200).json("Expense succesfully added");
     } catch (err) {
-        console.error("Eroare la executarea interogării:", err);
-        return res.status(500).json({ message: "error add into expenses" });
+        await connection.rollback(); //daca nu sunt successfull toate query-urile, dam rollback si nu avem nicio inregistrare noua
+        console.error('Transaction Failed:', err);
+    } finally {
+        await connection.end();
     }
 });
 

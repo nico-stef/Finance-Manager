@@ -133,12 +133,17 @@ export default function ProfileScreen() {
                         <View style={styles.formContainer}>
                             <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("User Data")}>
                                 <Icon name="user" size={20} color="white" style={styles.icon} />
-                                <Text style={styles.text}>See profile</Text>
+                                <Text style={styles.text}>See Profile</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Edit Profile")}>
                                 <Icon name="edit" size={20} color="white" style={styles.icon} />
-                                <Text style={styles.text}>Edit profile</Text>
+                                <Text style={styles.text}>Edit Profile</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("SeeAccounts")}>
+                                <Icon name="credit-card" size={20} color="white" style={styles.icon} />
+                                <Text style={styles.text}>Your Money Accounts</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity style={[styles.button, { backgroundColor: 'red' }]} onPress={() => handleLogout(username)}>
@@ -148,7 +153,7 @@ export default function ProfileScreen() {
 
                             <TouchableOpacity style={[styles.button, { backgroundColor: '#B22222' }]} onPress={deleteAccountAlert}>
                                 <Icon name="user" size={20} color="white" style={styles.icon} />
-                                <Text style={styles.text}>Delete account</Text>
+                                <Text style={styles.text}>Delete Account</Text>
                             </TouchableOpacity>
 
                             <FloatingActionButton ></FloatingActionButton>

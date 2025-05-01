@@ -52,6 +52,7 @@ export const deleteTags = async (userId, tags) => {
     }
 };
 
+import { Alert } from 'react-native';
 export const addExpense = async (userId, tags, amount, date, categoryId, AccountId, note, budget_id) => {
     try {
         const response = await axios.post(`${API_URL}/addExpense`,
@@ -65,9 +66,12 @@ export const addExpense = async (userId, tags, amount, date, categoryId, Account
                 tags,
                 budget_id
             });
-        return response.data;
+        return response;
     } catch (error) {
-        console.log('Eroare la cererea ADD expense:', error);
+        if (error.response?.status === 400) {
+            Alert.alert('Warning', error.response.data || 'Not enough funds.');
+            console.log('Eroare la cererea add expense:', error);
+        }
     }
 };
 
@@ -87,7 +91,7 @@ export const addIncome = async (userId, amount, date, accountId, note) => {
     }
 };
 
-export const addBudget = async ( id_user, name, amount, date, freq, note) => {
+export const addBudget = async (id_user, name, amount, date, freq, note) => {
     try {
         const response = await axios.post(`${API_URL}/addBudget`,
             {
@@ -103,12 +107,12 @@ export const getBudgets = async (userId) => {
     try {
         const response = await axios.get(`${API_URL}/getBudgetsOptions/${userId}`);
         // const budgetNames = response.data.map(item => item.name)
-            const options = response.data.map(item => ({
-                label: item.name,    // Valoarea va fi folosită atât pentru 'label' cât și pentru 'value'
-                value: item.name,    // Poți schimba acest lucru dacă vrei un alt tip de 'value'
-                name: item.name, 
-                idBudget: item.idbudgets
-            }));
+        const options = response.data.map(item => ({
+            label: item.name,    // Valoarea va fi folosită atât pentru 'label' cât și pentru 'value'
+            value: item.name,    // Poți schimba acest lucru dacă vrei un alt tip de 'value'
+            name: item.name,
+            idBudget: item.idbudgets
+        }));
         return options; //un array cu obiecte bugete
     } catch (error) {
         console.error('Eroare la cererea GET tags:', error);
@@ -118,8 +122,8 @@ export const getBudgets = async (userId) => {
 export const getBudgetsAll = async (userId, currentMonth, currentYear) => {
     try {
         const response = await axios.get(`${API_URL}/getBudgets/${userId}?month=${currentMonth}&year=${currentYear}`);
-        
-        return response.data; 
+
+        return response.data;
     } catch (error) {
         console.error('Eroare la cererea GET tags:', error);
     }

@@ -13,9 +13,9 @@ router.get("/expenses", async (req, res) => {
 
     const { account_id, userid } = req.query; //daca vrem toate accounts, nu transmitem account_id in query. sau transmitem valori falsy
 
-    const acc = account_id==="total" ? null : account_id; //daca vrem sa stim totalul inlocuim cu null ca sa ia toate accounts in considereare
+    const acc = account_id === "total" ? null : account_id; //daca vrem sa stim totalul inlocuim cu null ca sa ia toate accounts in considereare
 
-    const query =  `SELECT amount, date, c.category, note, icon, idexpenses
+    const query = `SELECT amount, date, c.category, note, icon, idexpenses
                     FROM expenses e
                     JOIN accounts a ON a.idaccounts = e.account_id
                     JOIN categories c ON c.idcategories = e.category_id
@@ -36,9 +36,9 @@ router.get("/incomes", async (req, res) => {
 
     const { account_id, userid } = req.query; //daca vrem toate accounts, nu transmitem account_id in query. sau transmitem valori falsy
 
-    const acc = account_id==="total" ? null : account_id; //daca vrem sa stim totalul inlocuim cu null ca sa ia toate accounts in considereare
+    const acc = account_id === "total" ? null : account_id; //daca vrem sa stim totalul inlocuim cu null ca sa ia toate accounts in considereare
 
-    const query =  `SELECT amount, date, note, idincomes
+    const query = `SELECT amount, date, note, idincomes
                     FROM incomes i
                     JOIN accounts a ON a.idaccounts = i.account_id
                     WHERE (a.idaccounts = ? OR ? IS NULL) AND a.id_user = ?
@@ -60,18 +60,35 @@ router.patch("/expenses/update/:idexpense", async (req, res) => {
     console.log(idexpense)
     const { date, amount, category, note } = req.body;
 
-    const query1 =  `SELECT idcategories FROM categories WHERE category = ?;`;
+    const query1 = `SELECT idcategories FROM categories WHERE category = ?;`;
 
     const query2 = `UPDATE expenses
                     SET category_id = ?, date = ?, amount = ?, note = ?
                     WHERE idexpenses = ?`
 
     try {
-        const category_id = await queryFunction(query1, [category]); //array de obiecte cu categoriile
-        const dateExtracted = date.split('T')[0];
-        // console.log()
-        const result = await queryFunction(query2, [category_id[0].idcategories, dateExtracted, amount, note, idexpense]);
-        res.status(200).json({ message: 'Expense updated successfully' });
+        const category_id = await queryFunction(query1, [category]); //cautam id-ul categorieib
+
+        const [result1] = await queryFunction('SELECT account_id, amount FROM expenses WHERE idexpenses = ?', [idexpense]);
+        const idAccount = result1.account_id; //luam id-account al acestui expense
+        const oldValueExpense = result1.amount;
+
+        const [result2] = await queryFunction('SELECT total FROM accounts WHERE idaccounts = ?', [idAccount]);
+        const totalAccount = result2.total;
+
+        const newTotalAccount = parseFloat(totalAccount) + parseFloat(oldValueExpense) - parseFloat(amount);
+
+        if (parseFloat(totalAccount) + parseFloat(oldValueExpense) - parseFloat(amount) > 0) {
+            const dateExtracted = date.split('T')[0];
+            await queryFunction(query2, [category_id[0].idcategories, dateExtracted, amount, note, idexpense]); //adaugam noul expense
+            await queryFunction('UPDATE accounts SET total = ? WHERE idaccounts = ?', [newTotalAccount, idAccount]);
+            res.status(200).json({ message: 'Expense updated successfully' });
+        }
+        else {
+            console.log(parseFloat(totalAccount) + parseFloat(oldValueExpense) - parseFloat(amount))
+            res.status(500).json({ message: 'Inssufficient funds!' });
+        }
+
     } catch (err) {
         console.error("Eroare la executarea interogării:", err);
         return res.status(500).json({ message: "error at updating expense record" });
@@ -83,11 +100,23 @@ router.delete("/expenses/delete/:idexpense", async (req, res) => {
 
     const idexpense = parseInt(req.params.idexpense, 10);
 
-    const query1 =  `DELETE FROM expenses WHERE idexpenses = ?;`;
+    const query1 = `DELETE FROM expenses WHERE idexpenses = ?;`;
 
     try {
-        const result = await queryFunction(query1, [idexpense]);
-        res.status(200).json({ message: 'Expense deleted successfully' });
+        const [result1] = await queryFunction('SELECT account_id, amount FROM expenses WHERE idexpenses = ?', [idexpense]);
+        const idAccount = result1.account_id; //luam id-account al acestui expense
+        const oldValueExpense = result1.amount;
+
+        const [result2] = await queryFunction('SELECT total FROM accounts WHERE idaccounts = ?', [idAccount]);
+        const totalAccount = result2.total; //luam totalul din account
+
+        const newTotalAccount = parseFloat(totalAccount) + parseFloat(oldValueExpense);
+
+        await queryFunction(query1, [idexpense]);
+
+        await queryFunction('UPDATE accounts SET total = ? WHERE idaccounts = ?', [newTotalAccount, idAccount]);
+        res.status(200).json({ message: 'Expense updated successfully' });
+
     } catch (err) {
         console.error("Eroare la executarea interogării:", err);
         return res.status(500).json({ message: "error at deleting expense record" });
@@ -100,16 +129,24 @@ router.patch("/incomes/update/:idincome", async (req, res) => {
     const idincome = parseInt(req.params.idincome, 10);
     const { date, amount, note } = req.body;
 
-    // const query1 =  `SELECT idcategories FROM categories WHERE category = ?;`;
-
     const query2 = `UPDATE incomes
                     SET date = ?, amount = ?, note = ?
                     WHERE idincomes = ?`
 
     try {
-        // const category_id = await queryFunction(query1, [category]); //array de obiecte cu categoriile
+        const [result1] = await queryFunction('SELECT account_id, amount FROM incomes WHERE idincomes = ?', [idincome]);
+        const idAccount = result1.account_id; //luam id-account al acestui income
+        const oldValueIncome = result1.amount;
+
+        const [result2] = await queryFunction('SELECT total FROM accounts WHERE idaccounts = ?', [idAccount]);
+        const totalAccount = result2.total; //luam totalul din account
+
+        const newTotalAccount = parseFloat(totalAccount) - parseFloat(oldValueIncome) + parseFloat(amount);
+
+        await queryFunction('UPDATE accounts SET total = ? WHERE idaccounts = ?', [newTotalAccount, idAccount]);
+
         const dateExtracted = date.split('T')[0];
-        const result = await queryFunction(query2, [dateExtracted, amount, note, idincome]);
+        await queryFunction(query2, [dateExtracted, amount, note, idincome]);
         res.status(200).json({ message: 'Income updated successfully' });
     } catch (err) {
         console.error("Eroare la executarea interogării:", err);
@@ -122,11 +159,23 @@ router.delete("/incomes/delete/:idincome", async (req, res) => {
 
     const idincome = parseInt(req.params.idincome, 10);
 
-    const query1 =  `DELETE FROM incomes WHERE idincomes = ?;`;
+    const query1 = `DELETE FROM incomes WHERE idincomes = ?;`;
 
     try {
-        const result = await queryFunction(query1, [idincome]);
+        const [result1] = await queryFunction('SELECT account_id, amount FROM incomes WHERE idincomes = ?', [idincome]);
+        const idAccount = result1.account_id; //luam id-account al acestui income
+        const valueIncome = result1.amount;
+
+        const [result2] = await queryFunction('SELECT total FROM accounts WHERE idaccounts = ?', [idAccount]);
+        const totalAccount = result2.total; //luam totalul din account
+
+        const newTotalAccount = parseFloat(totalAccount) - parseFloat(valueIncome);
+
+        await queryFunction(query1, [idincome]);
+
+        await queryFunction('UPDATE accounts SET total = ? WHERE idaccounts = ?', [newTotalAccount, idAccount]);
         res.status(200).json({ message: 'Income deleted successfully' });
+
     } catch (err) {
         console.error("Eroare la executarea interogării:", err);
         return res.status(500).json({ message: "error at deleting income record" });

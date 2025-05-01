@@ -69,6 +69,63 @@ router.delete('/deleteUser', authenticateToken, async (req, res) =>{
         console.error("Eroare la executarea interogării:", err);
         return res.status(500).json({message: "user not found"});
     }
-})
+});
+
+router.get("/getAccounts", authenticateToken, async (req, res) => {
+
+    const userId = req.user.userid;
+
+    if(!userId)
+        return res.status(500).json({ message: "userId is null" });
+
+    const query =  `SELECT idaccounts AS id_account, name, total 
+                    FROM accounts
+                    WHERE id_user = ?;`;
+
+    try {
+        const result = await queryFunction(query, [userId]);
+        return res.status(200).json(result);
+    } catch (err) {
+        return res.status(500).json({ message: "error at getting accounts" });
+    }
+});
+
+router.delete("/deleteAccount/:idAccount", async (req, res) => {
+
+    const idAccount = parseInt(req.params.idAccount, 10);
+
+    const query1 =  `DELETE FROM accounts WHERE idaccounts = ?;`;
+
+    try {
+        const result = await queryFunction(query1, [idAccount]);
+        res.status(200).json({ message: 'Account deleted successfully' });
+    } catch (err) {
+        console.error("Eroare la executarea interogării:", err);
+        return res.status(500).json({ message: "error at deleting account" });
+    }
+
+});
+
+router.post('/addAccount', authenticateToken, async (req, res) => {
+
+    const { name, amount } = req.body;
+    const userId = req.user.userid;
+
+    if (!userId || !name || !amount) {
+        return res.status(400).json({ message: 'necessary fields null!' });
+    };
+
+    const query = `INSERT INTO accounts (name, total, id_user) 
+                   VALUES(?, ?, ?);`;
+    const data = [name, amount, userId];
+
+    try {
+        const result = await queryFunction(query, data);
+        return res.status(200).json({message: 'Account added successfully!'});
+    } catch (err) {
+        console.error("Eroare la executarea interogării:", err);
+        return res.status(500).json({ message: "error at posting account" });
+    }
+});
 
 module.exports = router;

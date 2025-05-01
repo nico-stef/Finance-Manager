@@ -6,3 +6,4 @@ frontend2/eas.json
 frontend2/package-lock.json
 frontend2/.env
 frontend2/.variables
+node_modules

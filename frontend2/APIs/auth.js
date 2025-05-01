@@ -51,3 +51,43 @@ export const logout = async (username) => {
         console.error('Eroare la logout:', error.message);
     }
 };
+
+export const getAccounts = async (accessToken) => {
+    try {
+        const response = await axios.get(`${API_URL}/user/getAccounts`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Eroare la cererea GET accounts:', error);
+    }
+};
+
+export const deleteAccount = async (idAccount) => {
+    try {
+        const response = await axios.delete(`${API_URL}/user/deleteAccount/${idAccount}`);
+        return response;
+    } catch (error) {
+        console.error('Eroare la cererea DELETE account:', error);
+    }
+};
+
+export const addAccount = async (name, amount, accessToken) => {
+    try {
+        const response = await axios.post(`${API_URL}/user/addAccount`,
+            {
+                name,
+                amount
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+        return response;
+    } catch (error) {
+        console.log('Eroare la cererea ADD account:', error);
+    }
+};

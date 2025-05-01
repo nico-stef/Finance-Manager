@@ -139,7 +139,7 @@ export default function ManageBudgets() {
                         contentContainerStyle={{ flexGrow: 1 }}
                         keyboardShouldPersistTaps="handled"
                     >
-                        <Header title="Spending Planner" icon="clipboard-list" toggleMenu={toggleMenu}></Header>
+                        <Header title="New Budget" icon="clipboard-list" toggleMenu={toggleMenu}></Header>
                         <View style={styles.container}>
 
                             {/* ----------------pick the name------------------- */}

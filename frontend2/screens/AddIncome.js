@@ -1,13 +1,16 @@
 import React from 'react';
 import { useEffect, useState } from "react";
-import { View, Text, TextInput, FlatList, StyleSheet, Modal, Pressable, Alert } from 'react-native';
-import { KeyboardAvoidingView, ScrollView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text, TextInput, FlatList, StyleSheet, Modal, Pressable, Alert, SafeAreaView } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, Platform, TouchableWithoutFeedback, Keyboard, StatusBar } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
 import { useNavigation } from '@react-navigation/native';
 import { getAccounts, addIncome } from '../APIs/moneyManagement';
 import { getUserData } from '../APIs/profile';
+import Menu from '../components.js/Menu';
+import SideMenuAnimated from '../components.js/SideMenuAnimated';
+import Header from '../components.js/Header';
 
 export default function AddIncome() {
     const [amount, setAmount] = useState('');
@@ -23,6 +26,11 @@ export default function AddIncome() {
     const [user, setUser] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(true);
     const navigation = useNavigation();
+    const [isOpen, setIsOpen] = useState(true);
+
+    const toggleMenu = () => {
+        setIsOpen(!isOpen);
+    };
 
     const getAccessToken = async () => {
         try {
@@ -92,7 +100,7 @@ export default function AddIncome() {
                 setLoading(false);
             }
         };
-        
+
         if (modalVisible2) {
             fetchAccounts();
         }
@@ -111,17 +119,19 @@ export default function AddIncome() {
         setDatePicker(false);
     }
 
-    const handleAddIncome = async ()=>{
+    const handleAddIncome = async () => {
 
-        if(!amount || !account)
+        if (!amount || !account)
             Alert.alert("Warning", "You need to complete the necessary fields!");
-        else{
+        else {
             await addIncome(user.id, amount, date, account.idaccounts, note);
             Alert.alert("Success", "Income added successfully!");
         }
     }
 
     return (
+        <SafeAreaView style={{ flex: 1 }}>
+             <StatusBar backgroundColor="white" barStyle="dark-content" />
         <KeyboardAvoidingView
             behavior={Platform.OS === "height"}
             style={{ flex: 1 }}
@@ -131,10 +141,11 @@ export default function AddIncome() {
                     contentContainerStyle={{ flexGrow: 1 }}
                     keyboardShouldPersistTaps="handled"
                 >
+                    <Header title="New Income" icon="plus-circle" toggleMenu={toggleMenu}></Header>
                     <View style={styles.container}>
                         {/* ----------------pick the amount------------------- */}
                         <Text style={styles.label}>Amount: </Text>
-                        <TextInput style={styles.input} onChangeText={setAmount} value={amount} placeholder="type your amount" keyboardType="numeric" />
+                        <TextInput style={[styles.input, { backgroundColor: 'white' }]} onChangeText={setAmount} value={amount} placeholder="type your amount" keyboardType="numeric" />
 
                         {/* -------------picking the date----------------- */}
                         <View style={styles.row}>
@@ -172,7 +183,7 @@ export default function AddIncome() {
 
                         {/* ---------------pick the note------------- */}
                         <Text style={styles.label}>Note: </Text>
-                        <TextInput style={styles.input} onChangeText={setNote} value={note} placeholder="write a note" />
+                        <TextInput style={[styles.input, { backgroundColor: 'white' }]} onChangeText={setNote} value={note} placeholder="write a note" />
 
 
                         {/* ----------------modal account-------------- */}
@@ -226,13 +237,32 @@ export default function AddIncome() {
                         </Pressable>
 
                     </View>
+                    <Menu></Menu>
+
+                    <SideMenuAnimated isOpen={isOpen}></SideMenuAnimated>
                 </ScrollView>
             </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
+        </SafeAreaView>
     )
 }
 
 const styles = StyleSheet.create({
+    button: {
+        width: '80%',
+        alignSelf: 'center',
+        borderRadius: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        elevation: 4,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    buttonClose: {
+        backgroundColor: '#16619a',
+        paddingBottom: 10
+    },
     container: {
         backgroundColor: '#CCE3DE',
         flex: 1,
@@ -282,7 +312,7 @@ const styles = StyleSheet.create({
         width: '90%',
         alignSelf: 'center',
     },
-    incomeButtonsView:{
+    incomeButtonsView: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
@@ -295,23 +325,10 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         alignContent: 'center',
         justifyContent: 'center',
-        
-    },
-    button: {
-        width: '70%',
-        alignSelf: 'center',
-        borderColor: 'black',
-        borderWidth: 1,
-        borderRadius: 20,
-        padding: 10,
-        elevation: 5,
+
     },
     buttonOpen: {
         backgroundColor: '#25a18e',
-    },
-    buttonClose: {
-        backgroundColor: '#16619a',
-        paddingBottom: 10
     },
     textStyle: {
         fontFamily: 'serif',

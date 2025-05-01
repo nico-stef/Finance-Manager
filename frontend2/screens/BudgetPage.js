@@ -100,15 +100,14 @@ export default function BudgetPage() {
     const Record = ({ item }) => {
         return (
             <View style={styles.cardRecordBig}>
-                <TouchableOpacity style={styles.cardRecord}>
+                <View style={styles.cardRecord}>
 
                     <View style={{ flexDirection: 'row', alignItems: 'center', width: '50%' }}>
                         <Text style={[styles.buttonTextRecord, { fontWeight: 'bold', marginLeft: 20 }]}>{item.name}</Text>
                     </View>
                     <Text style={[styles.buttonTextRecord]}>{item.total ? (item.total.endsWith('.00') ? parseFloat(item.total).toFixed(0) : item.total) : `0`}/{item.amount.endsWith('.00') ? parseFloat(item.amount).toFixed(0) : item.amount}</Text>
-                    <Icon name="arrow-right" size={20} style={styles.icon} />
 
-                </TouchableOpacity>
+                </View>
                 <Progress.Bar progress={parseFloat(item.total)/parseFloat(item.amount)} width={null} style={{ width: '90%', alignSelf: 'center' }} color='#69C0FF' />
             </View>
 
@@ -225,7 +224,6 @@ const styles = StyleSheet.create({
     cardRecordBig: {
         backgroundColor: '#fff',
         borderRadius: 10,
-        elevation: 3,
         borderWidth: 0.5,
         borderColor: 'grey',
         marginTop: 10,

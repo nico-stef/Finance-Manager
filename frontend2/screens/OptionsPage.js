@@ -113,6 +113,10 @@ export default function OptionsPage({ route }) {
         setAvailableAmount(sum);
     };
 
+        useEffect(() => {
+        console.log("objective: ", options)
+    }, [options]);
+
     const Record = ({ item, onCheckboxToggle }) => {
         const [isChecked, setChecked] = useState(item.chosen === 1);
 

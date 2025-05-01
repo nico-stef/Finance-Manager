@@ -16,6 +16,9 @@ import WalletImage from '../images/wallet.jpg'
 import { useNavigation } from '@react-navigation/native';
 import SideMenuAnimated from '../components.js/SideMenuAnimated';
 import Header from '../components.js/Header';
+import LineChart from '../components.js/LineChartComponent';
+import LineChartComponent from '../components.js/LineChartComponent';
+import BarChartComponent from '../components.js/BarChartComponent';
 
 export default function Charts() {
 
@@ -81,9 +84,7 @@ export default function Charts() {
         const getAccessTokenAsync = async () => {
             await getAccessToken();
         };
-
         getAccessTokenAsync();
-
     }, [])
 
 
@@ -129,7 +130,7 @@ export default function Charts() {
                 console.error('Eroare la cererea GET expenses chart:', error);
             }
         };
-        
+
         if (period === "today") {
             const acc = account.name === 'total' ? 'total' : account.idaccounts;
             fetchExpensesData(period, acc, date.toLocaleDateString(), '', '', '', '', userid)
@@ -325,17 +326,22 @@ export default function Charts() {
 
                 <View style={styles.pieOption}>
                     <TouchableOpacity style={[styles.pieOptionsButton, { backgroundColor: selectedTab === 1 ? "white" : "#166055" }]} onPress={() => handleTabPress(1)}>
-                        <Icon name="briefcase" size={18} color={selectedTab === 1 ? 'black' : 'white'} style={styles.icon} />
-                        <Text style={{ color: selectedTab === 1 ? 'black' : 'white' }}>view by categories</Text>
+                        <Icon name="chart-line" size={18} color={selectedTab === 1 ? 'black' : 'white'} style={styles.icon} />
+                        <Text style={{ color: selectedTab === 1 ? 'black' : 'white', textAlign: 'center' }}>expense tendencies</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={[styles.pieOptionsButton, { backgroundColor: selectedTab === 2 ? "white" : "#166055" }]} onPress={() => handleTabPress(2)}>
-                        <Icon name="tags" size={18} color={selectedTab === 2 ? 'black' : 'white'} style={styles.icon} />
-                        <Text style={{ color: selectedTab === 2 ? 'black' : 'white' }}>view by tags</Text>
+                        <Icon name="chart-pie" size={18} color={selectedTab === 2 ? 'black' : 'white'} style={styles.icon} />
+                        <Text style={{ color: selectedTab === 2 ? 'black' : 'white', textAlign: 'center' }}>expenses by categories</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={[styles.pieOptionsButton, { backgroundColor: selectedTab === 3 ? "white" : "#166055" }]} onPress={() => handleTabPress(3)}>
+                        <Icon name="chart-bar" size={18} color={selectedTab === 3 ? 'black' : 'white'} style={styles.icon} />
+                        <Text style={{ color: selectedTab === 3 ? 'black' : 'white', textAlign: 'center' }}>budget comparisson</Text>
                     </TouchableOpacity>
                 </View>
 
-
+                {selectedTab === 2 ? (<>
                 <View style={styles.box} >
 
                     <View style={styles.optionsChart}>
@@ -368,14 +374,12 @@ export default function Charts() {
                         </TouchableOpacity>
                     </View>
 
-
-
                     {pieChartData.length > 0 ? (
                         <View style={{ alignItems: "center" }}>
                             <PieChart
                                 data={pieChartData}
                                 strokeColor='black'
-                                strokeWidth={1}
+                                strokeWidth={0.5}
                                 focusOnPress={true}
                                 showTooltip={true}
                             />
@@ -387,26 +391,26 @@ export default function Charts() {
                         </View>
                     )}
 
+                    
+                        <View style={{ maxHeight: 200 }}>
+                            {totalSpent > 0 &&
+                                <Text style={{ fontWeight: 'bold', fontSize: 16, flexDirection: 'row', textAlign: "center", paddingBottom: 10 }}>Total spent: {totalSpent}$</Text>
+                            }
 
-                    <View style={{ maxHeight: 200 }}>
-                        {totalSpent > 0 &&
-                            <Text style={{ fontWeight: 'bold', fontSize: 16, flexDirection: 'row', textAlign: "center", paddingBottom: 10 }}>Total spent: {totalSpent}$</Text>
-                        }
+                            <FlatList
+                                data={pieChartData}
+                                keyExtractor={(item, index) => index.toString()}
+                                renderItem={({ item }) => (
+                                    <View style={styles.boxInfo}>
+                                        <Text style={[styles.boxInfoText, styles.boxInfoTextCategory]}>{item.category}</Text>
+                                        <Text style={styles.boxInfoText}>{item.total}$</Text>
+                                        <Text style={styles.boxInfoText}>{item.percent}%</Text>
+                                    </View>
+                                )}
+                            />
 
-                        <FlatList
-                            data={pieChartData}
-                            keyExtractor={(item, index) => index.toString()}
-                            renderItem={({ item }) => (
-                                <View style={styles.boxInfo}>
-                                    <Text style={[styles.boxInfoText, styles.boxInfoTextCategory]}>{item.category}</Text>
-                                    <Text style={styles.boxInfoText}>{item.total}$</Text>
-                                    <Text style={styles.boxInfoText}>{item.percent}%</Text>
-                                </View>
-                            )}
-                        />
-
-                    </View>
-                </View>
+                        </View>
+                </View></>) : (selectedTab === 3 ?  (<BarChartComponent/>) : (<LineChartComponent/>)) }
 
                 <Menu></Menu>
             </View>
@@ -471,7 +475,6 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         marginHorizontal: 5,
         paddingVertical: 2,
-
     },
     optionsButton: {
         flex: 1,

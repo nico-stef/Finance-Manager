@@ -1,7 +1,7 @@
 import React from 'react';
 import { useEffect, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal, Pressable, Alert } from 'react-native';
-import { KeyboardAvoidingView, ScrollView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, Platform, TouchableWithoutFeedback, Keyboard, SafeAreaView, StatusBar } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -10,6 +10,9 @@ import { useNavigation } from '@react-navigation/native';
 import { getCategories, getAccounts, getTags, addTag, deleteTags, addExpense, getBudgets } from '../APIs/moneyManagement';
 import { getUserData } from '../APIs/profile';
 import { Dropdown } from 'react-native-element-dropdown';
+import Menu from '../components.js/Menu';
+import SideMenuAnimated from '../components.js/SideMenuAnimated';
+import Header from '../components.js/Header';
 
 export default function AddExpense() {
     const [amount, setAmount] = useState('');
@@ -34,6 +37,11 @@ export default function AddExpense() {
     const [user, setUser] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(true);
     const navigation = useNavigation();
+    const [isOpen, setIsOpen] = useState(true);
+
+    const toggleMenu = () => {
+        setIsOpen(!isOpen);
+    };
 
     const getAccessToken = async () => {
         try {
@@ -113,12 +121,12 @@ export default function AddExpense() {
             const response = await getBudgets(user.id);
             setBudgetOptions(response);
         };
-    
+
         if (user?.id) {
             getBudgetsAsync();
         }
     }, [user?.id]);
-    
+
 
     useEffect(() => {
         const fetchAccounts = async () => {
@@ -204,8 +212,16 @@ export default function AddExpense() {
         if (!amount || !category || !account)
             Alert.alert("Warning", "You need to complete the necessary fields!");
         else {
-            await addExpense(user.id, tagIds, amount, date, category.idcategories, account.idaccounts, note, budget.idBudget);
-            Alert.alert("Success", "Expense added successfully!");
+            const response = await addExpense(user.id, tagIds, amount, date, category.idcategories, account.idaccounts, note, budget.idBudget);   
+            if (response.status === 200) {
+                
+                Alert.alert("Success", "Expense added successfully!");
+                setAmount('');
+                setAccount('');
+                setCategory('');
+                setBudget('');
+                setNote('');
+            }
         }
     }
 
@@ -217,85 +233,88 @@ export default function AddExpense() {
     ];
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === "height"}
-            style={{ flex: 1 }}
-        >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <ScrollView
-                    contentContainerStyle={{ flexGrow: 1 }}
-                    keyboardShouldPersistTaps="handled"
-                >
-                    <View style={styles.container}>
-                        {/* ----------------pick the amount------------------- */}
-                        <Text style={styles.label}>Amount: </Text>
-                        <TextInput style={styles.input} onChangeText={setAmount} value={amount} placeholder="type your amount" keyboardType="numeric" />
+        <SafeAreaView style={{ flex: 1 }}>
+            <StatusBar backgroundColor="white" barStyle="dark-content" />
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "height"}
+                style={{ flex: 1 }}
+            >
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                    <ScrollView
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        keyboardShouldPersistTaps="handled"
+                    >
+                        <Header title="New Expense" icon="money-bill-wave" toggleMenu={toggleMenu}></Header>
+                        <View style={styles.container}>
+                            {/* ----------------pick the amount------------------- */}
+                            <Text style={styles.label}>Amount: </Text>
+                            <TextInput style={[styles.input, { backgroundColor: 'white' }]} onChangeText={setAmount} value={amount} placeholder="type your amount" keyboardType="numeric" />
 
-                        {/* -------------picking the date----------------- */}
-                        <View style={styles.row}>
-                            <Text style={styles.label}>Date: </Text>
-                            <TextInput style={[styles.input, { borderWidth: 0, fontSize: 16 }]} value={date ? date.toLocaleDateString() : ""} editable={false} />
-                        </View>
-                        <Pressable
-                            style={[styles.button, styles.buttonOpen]}
-                            onPress={() => setDatePicker(true)}
-                        >
-                            <Text style={styles.textStyle}>change date</Text>
-                        </Pressable>
-                        {
-                            datePicker && (
-                                <DateTimePicker
-                                    mode={'date'}
-                                    is24Hour={true}
-                                    value={date || new Date()}
-                                    onChange={handleDateChange}
-                                >
-                                </DateTimePicker>
-                            )
-                        }
+                            {/* -------------picking the date----------------- */}
+                            <View style={styles.row}>
+                                <Text style={styles.label}>Date: </Text>
+                                <TextInput style={[styles.input, { borderWidth: 0, fontSize: 16 }]} value={date ? date.toLocaleDateString() : ""} editable={false} />
+                            </View>
+                            <Pressable
+                                style={[styles.button, styles.buttonOpen]}
+                                onPress={() => setDatePicker(true)}
+                            >
+                                <Text style={styles.textStyle}>change date</Text>
+                            </Pressable>
+                            {
+                                datePicker && (
+                                    <DateTimePicker
+                                        mode={'date'}
+                                        is24Hour={true}
+                                        value={date || new Date()}
+                                        onChange={handleDateChange}
+                                    >
+                                    </DateTimePicker>
+                                )
+                            }
 
 
-                        {/* ---------------pick the category------------- */}
-                        <View style={styles.row}>
-                            <Text style={styles.label}>Category: </Text>
-                            <TextInput style={[styles.input, { borderWidth: 0, fontSize: 16 }]} value={category.category} editable={false} />
-                        </View>
-                        <Pressable
-                            style={[styles.button, styles.buttonOpen]}
-                            onPress={() => setModalVisible1(true)}>
-                            <Text style={styles.textStyle}>choose category</Text>
-                        </Pressable>
+                            {/* ---------------pick the category------------- */}
+                            <View style={styles.row}>
+                                <Text style={styles.label}>Category: </Text>
+                                <TextInput style={[styles.input, { borderWidth: 0, fontSize: 16 }]} value={category.category} editable={false} />
+                            </View>
+                            <Pressable
+                                style={[styles.button, styles.buttonOpen]}
+                                onPress={() => setModalVisible1(true)}>
+                                <Text style={styles.textStyle}>choose category</Text>
+                            </Pressable>
 
-                        {/* ---------------pick the account------------- */}
-                        <View style={styles.row}>
-                            <Text style={styles.label}>Account: </Text>
-                            <TextInput style={[styles.input, { borderWidth: 0, fontSize: 16 }]} value={account.name} editable={false} />
-                        </View>
-                        <Pressable
-                            style={[styles.button, styles.buttonOpen]}
-                            onPress={() => setModalVisible2(true)}>
-                            <Text style={styles.textStyle}>choose account</Text>
-                        </Pressable>
+                            {/* ---------------pick the account------------- */}
+                            <View style={styles.row}>
+                                <Text style={styles.label}>Account: </Text>
+                                <TextInput style={[styles.input, { borderWidth: 0, fontSize: 16 }]} value={account.name} editable={false} />
+                            </View>
+                            <Pressable
+                                style={[styles.button, styles.buttonOpen]}
+                                onPress={() => setModalVisible2(true)}>
+                                <Text style={styles.textStyle}>choose account</Text>
+                            </Pressable>
 
-                        {/* ---------------pick the budget------------- */}
-                        <Text style={[styles.label, { paddingTop: 10 }]}>Budget: </Text>
-                        <Dropdown
-                            data={budgetOptions}
-                            containerStyle={styles.dropdownContainer}
-                            selectedTextStyle={[styles.input, { borderWidth: 0, fontSize: 16, marginStart: 20 }]}
-                            placeholderStyle={{ marginStart: 20, paddingVertical: 10 }}
-                            placeholder='select budget...'
-                            maxHeight={200}
-                            labelField="label"
-                            valueField="value"
-                            value={budget.label}
-                            onChange={item => {
-                                setBudget(item);
-                            }}
-                        />
+                            {/* ---------------pick the budget------------- */}
+                            <Text style={[styles.label, { paddingTop: 10 }]}>Budget: </Text>
+                            <Dropdown
+                                data={budgetOptions}
+                                containerStyle={styles.dropdownContainer}
+                                selectedTextStyle={[styles.input, { borderWidth: 0, fontSize: 16, marginStart: 20 }]}
+                                placeholderStyle={{ marginStart: 20, paddingVertical: 10 }}
+                                placeholder='select budget...'
+                                maxHeight={200}
+                                labelField="label"
+                                valueField="value"
+                                value={budget.label}
+                                onChange={item => {
+                                    setBudget(item);
+                                }}
+                            />
 
-                        {/* ---------------pick the tags------------- */}
-                        <View style={styles.row}>
+                            {/* ---------------pick the tags------------- */}
+                            {/* <View style={styles.row}>
                             <Text style={styles.label}>Tags: </Text>
                             <TextInput style={[{ borderWidth: 0, fontSize: 14, fontFamily: 'serif' }]} multiline={true} numberOfLines={5}
                                 value={selectedTags.map(tag => tag.name).join(', ')} editable={false} />
@@ -304,172 +323,176 @@ export default function AddExpense() {
                             style={[styles.button, styles.buttonOpen]}
                             onPress={() => setModalVisible3(true)}>
                             <Text style={styles.textStyle}>select tags</Text>
-                        </Pressable>
+                        </Pressable> */}
 
-                        {/* ---------------pick the note------------- */}
-                        <Text style={styles.label}>Note: </Text>
-                        <TextInput style={styles.input} onChangeText={setNote} value={note} placeholder="write a note" />
+                            {/* ---------------pick the note------------- */}
+                            <Text style={styles.label}>Note: </Text>
+                            <TextInput style={[styles.input, { backgroundColor: 'white' }]} onChangeText={setNote} value={note} placeholder="write a note" />
 
-                        {/* ----------modal category------------------- */}
-                        <Modal
-                            animationType="slide"
-                            transparent={true}
-                            visible={modalVisible1}
-                            onRequestClose={() => setModalVisible1(false)}
-                        >
-                            <View style={styles.centeredView}>
-                                <View style={styles.modalView}>
-                                    <Text style={styles.modalTitle}>Select a Category</Text>
+                            {/* ----------modal category------------------- */}
+                            <Modal
+                                animationType="slide"
+                                transparent={true}
+                                visible={modalVisible1}
+                                onRequestClose={() => setModalVisible1(false)}
+                            >
+                                <View style={styles.centeredView}>
+                                    <View style={styles.modalView}>
+                                        <Text style={styles.modalTitle}>Select a Category</Text>
 
-                                    {loading ? (
-                                        <Text>Loading...</Text>
-                                    ) : (
-                                        <FlatList
-                                            data={categories}
-                                            keyExtractor={(item) => item.idcategories}
-                                            numColumns={2}
-                                            renderItem={({ item }) => (
-                                                <Pressable style={[
-                                                    styles.categoryItem,
-                                                    category && category.idcategories === item.idcategories
-                                                        ? styles.selectedCategory
-                                                        : null,
-                                                ]}
-                                                    onPress={() => handleCategory(item)} >
-                                                    <Icon name={item.icon} size={20} color="black" style={styles.icon} />
-                                                    <Text style={styles.categoryText}>{item.category}</Text>
-                                                </Pressable>
-                                            )}
-                                        />
-                                    )}
-
-                                    <Pressable
-                                        style={[styles.button, styles.buttonClose]}
-                                        onPress={() => setModalVisible1(false)}
-                                    >
-                                        <Text style={styles.textStyle}>Close</Text>
-                                    </Pressable>
-                                </View>
-                            </View>
-                        </Modal>
-
-
-                        {/* ----------------modal account-------------- */}
-                        <Modal
-                            animationType="slide"
-                            transparent={true}
-                            visible={modalVisible2}
-                            onRequestClose={() => setModalVisible2(false)}
-                        >
-                            <View style={styles.centeredView}>
-                                <View style={styles.modalView}>
-                                    <Text style={styles.modalTitle}>Select account</Text>
-
-                                    {loading ? (
-                                        <Text>Loading...</Text>
-                                    ) : (
-                                        <FlatList
-                                            data={accounts}
-                                            keyExtractor={(item) => item.idaccounts}
-                                            numColumns={2}
-                                            renderItem={({ item }) => (
-                                                <Pressable style={[
-                                                    styles.categoryItem,
-                                                    account && account.idaccounts === item.idaccounts
-                                                        ? styles.selectedCategory
-                                                        : null,
-                                                ]}
-                                                    onPress={() => handleAccount(item)} >
-                                                    <Text style={styles.categoryText}>{item.name}</Text>
-                                                </Pressable>
-                                            )}
-                                        />
-                                    )}
-
-                                    <Pressable
-                                        style={[styles.button, styles.buttonClose]}
-                                        onPress={() => setModalVisible2(false)}
-                                    >
-                                        <Text style={styles.textStyle}>Close</Text>
-                                    </Pressable>
-                                </View>
-                            </View>
-                        </Modal>
-
-                        {/* ---------------modal tags-------------------- */}
-                        <Modal
-                            animationType="slide"
-                            transparent={true}
-                            visible={modalVisible3}
-                            onRequestClose={() => setModalVisible3(false)}
-                        >
-                            <View style={styles.centeredView}>
-                                <View style={styles.modalView}>
-                                    <Text style={styles.modalTitle}>Select tags</Text>
-                                    <Text style={{ textAlign: "center", fontSize: 16 }}>Select or unselect tags by tapping on them! </Text>
-
-                                    {loading ? (
-                                        <Text>Loading...</Text>
-                                    ) : (
-                                        <FlatList
-                                            data={[...tags, { idtags: 'add', name: '' }]}
-                                            keyExtractor={(item) => item.idtags}
-                                            numColumns={2}
-                                            renderItem={({ item }) => (
-                                                item.idtags !== 'add' ? (
+                                        {loading ? (
+                                            <Text>Loading...</Text>
+                                        ) : (
+                                            <FlatList
+                                                data={categories}
+                                                keyExtractor={(item) => item.idcategories}
+                                                numColumns={2}
+                                                renderItem={({ item }) => (
                                                     <Pressable style={[
                                                         styles.categoryItem,
-                                                        selectedTags.some(t => t.idtags === item.idtags)
+                                                        category && category.idcategories === item.idcategories
                                                             ? styles.selectedCategory
                                                             : null,
                                                     ]}
-                                                        onPress={() => handleSelectedTags(item)} >
-                                                        <Text style={styles.categoryText}>{item.name}</Text>
+                                                        onPress={() => handleCategory(item)} >
+                                                        <Icon name={item.icon} size={20} color="black" style={styles.icon} />
+                                                        <Text style={styles.categoryText}>{item.category}</Text>
                                                     </Pressable>
-                                                ) : (
-                                                    <Pressable style={styles.categoryItem} >
-                                                        <TextInput onChangeText={setAddedTag} value={addedTag} placeholder='add a tag..'></TextInput>
-                                                    </Pressable>
-                                                )
-                                            )}
-                                        />
-                                    )}
+                                                )}
+                                            />
+                                        )}
 
-                                    <View style={styles.incomeButtonsView}>
                                         <Pressable
-                                            style={[styles.buttonIncome, { backgroundColor: '#4CAF50' }]}
-                                            onPress={() => handleAddTag(user.id, addedTag)}>
-                                            <Text style={styles.textStyle}>create new tag</Text>
-                                        </Pressable>
-                                        <Pressable
-                                            style={[styles.buttonIncome, { backgroundColor: '#E74C3C' }]}
-                                            onPress={() => handleDeleteTags()}>
-                                            <Text style={styles.textStyle}>delete selected tags</Text>
+                                            style={[styles.button, styles.buttonClose]}
+                                            onPress={() => setModalVisible1(false)}
+                                        >
+                                            <Text style={styles.textStyle}>Close</Text>
                                         </Pressable>
                                     </View>
-
-                                    <Pressable
-                                        style={[styles.button, styles.buttonClose]}
-                                        onPress={() => setModalVisible3(false)}
-                                    >
-                                        <Text style={styles.textStyle}>Close</Text>
-                                    </Pressable>
                                 </View>
-                            </View>
-                        </Modal>
+                            </Modal>
 
-                        <Pressable
-                            style={[styles.button, styles.buttonClose, { marginTop: 20 }]}
-                            onPress={() => handleAddExpense()}
-                            android_ripple={{ color: 'white' }}
-                        >
-                            <Text style={styles.textStyle}>add expense</Text>
-                        </Pressable>
 
-                    </View>
-                </ScrollView>
-            </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+                            {/* ----------------modal account-------------- */}
+                            <Modal
+                                animationType="slide"
+                                transparent={true}
+                                visible={modalVisible2}
+                                onRequestClose={() => setModalVisible2(false)}
+                            >
+                                <View style={styles.centeredView}>
+                                    <View style={styles.modalView}>
+                                        <Text style={styles.modalTitle}>Select account</Text>
+
+                                        {loading ? (
+                                            <Text>Loading...</Text>
+                                        ) : (
+                                            <FlatList
+                                                data={accounts}
+                                                keyExtractor={(item) => item.idaccounts}
+                                                numColumns={2}
+                                                renderItem={({ item }) => (
+                                                    <Pressable style={[
+                                                        styles.categoryItem,
+                                                        account && account.idaccounts === item.idaccounts
+                                                            ? styles.selectedCategory
+                                                            : null,
+                                                    ]}
+                                                        onPress={() => handleAccount(item)} >
+                                                        <Text style={styles.categoryText}>{item.name}</Text>
+                                                    </Pressable>
+                                                )}
+                                            />
+                                        )}
+
+                                        <Pressable
+                                            style={[styles.button, styles.buttonClose]}
+                                            onPress={() => setModalVisible2(false)}
+                                        >
+                                            <Text style={styles.textStyle}>Close</Text>
+                                        </Pressable>
+                                    </View>
+                                </View>
+                            </Modal>
+
+                            {/* ---------------modal tags-------------------- */}
+                            <Modal
+                                animationType="slide"
+                                transparent={true}
+                                visible={modalVisible3}
+                                onRequestClose={() => setModalVisible3(false)}
+                            >
+                                <View style={styles.centeredView}>
+                                    <View style={styles.modalView}>
+                                        <Text style={styles.modalTitle}>Select tags</Text>
+                                        <Text style={{ textAlign: "center", fontSize: 16 }}>Select or unselect tags by tapping on them! </Text>
+
+                                        {loading ? (
+                                            <Text>Loading...</Text>
+                                        ) : (
+                                            <FlatList
+                                                data={[...tags, { idtags: 'add', name: '' }]}
+                                                keyExtractor={(item) => item.idtags}
+                                                numColumns={2}
+                                                renderItem={({ item }) => (
+                                                    item.idtags !== 'add' ? (
+                                                        <Pressable style={[
+                                                            styles.categoryItem,
+                                                            selectedTags.some(t => t.idtags === item.idtags)
+                                                                ? styles.selectedCategory
+                                                                : null,
+                                                        ]}
+                                                            onPress={() => handleSelectedTags(item)} >
+                                                            <Text style={styles.categoryText}>{item.name}</Text>
+                                                        </Pressable>
+                                                    ) : (
+                                                        <Pressable style={styles.categoryItem} >
+                                                            <TextInput onChangeText={setAddedTag} value={addedTag} placeholder='add a tag..'></TextInput>
+                                                        </Pressable>
+                                                    )
+                                                )}
+                                            />
+                                        )}
+
+                                        <View style={styles.incomeButtonsView}>
+                                            <Pressable
+                                                style={[styles.buttonIncome, { backgroundColor: '#4CAF50' }]}
+                                                onPress={() => handleAddTag(user.id, addedTag)}>
+                                                <Text style={styles.textStyle}>create new tag</Text>
+                                            </Pressable>
+                                            <Pressable
+                                                style={[styles.buttonIncome, { backgroundColor: '#E74C3C' }]}
+                                                onPress={() => handleDeleteTags()}>
+                                                <Text style={styles.textStyle}>delete selected tags</Text>
+                                            </Pressable>
+                                        </View>
+
+                                        <Pressable
+                                            style={[styles.button, styles.buttonClose]}
+                                            onPress={() => setModalVisible3(false)}
+                                        >
+                                            <Text style={styles.textStyle}>Close</Text>
+                                        </Pressable>
+                                    </View>
+                                </View>
+                            </Modal>
+
+                            <Pressable
+                                style={[styles.button, styles.buttonClose, { marginTop: 20 }]}
+                                onPress={() => handleAddExpense()}
+                                android_ripple={{ color: 'white' }}
+                            >
+                                <Text style={styles.textStyle}>add expense</Text>
+                            </Pressable>
+
+                        </View>
+                        <Menu></Menu>
+
+                        <SideMenuAnimated isOpen={isOpen}></SideMenuAnimated>
+                    </ScrollView>
+                </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     )
 }
 
@@ -477,6 +500,7 @@ const styles = StyleSheet.create({
     container: {
         backgroundColor: '#CCE3DE',
         flex: 1,
+        paddingTop: 20
     },
     row: {
         flexDirection: 'row',
@@ -561,20 +585,22 @@ const styles = StyleSheet.create({
 
     },
     button: {
-        width: '70%',
+        width: '80%',
         alignSelf: 'center',
-        borderColor: 'black',
-        borderWidth: 1,
-        borderRadius: 20,
-        padding: 10,
-        elevation: 5,
-    },
-    buttonOpen: {
-        backgroundColor: '#25a18e',
+        borderRadius: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        elevation: 4,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     buttonClose: {
         backgroundColor: '#16619a',
         paddingBottom: 10
+    },
+    buttonOpen: {
+        backgroundColor: '#25a18e',
     },
     textStyle: {
         fontFamily: 'serif',
