@@ -40,14 +40,6 @@ export default function BudgetPage() {
             const user = jwtDecode(accessToken);
             setUserid(user.userid);
 
-            const currentTime = Date.now() / 1000; //timpul curent în secunde
-            if (user.exp < currentTime || !accessToken) {
-                !accessToken ? console.log('Nu există access token!') : console.log('Token-ul a expirat!');
-                await AsyncStorage.removeItem('accessToken');
-                navigation.navigate('LogIn');
-                return;
-            }
-
         } catch (error) {
             console.error("Eroare la recuperarea token-ului:", error);
         }
@@ -65,10 +57,14 @@ export default function BudgetPage() {
     useEffect(() => {
         const currentMonth = month ? month.month : date.getMonth() + 1; // 0=ianuarie => adaugam 1
         const currentYear = month ? month.year : date.getFullYear();
-        console.log(currentMonth, currentYear)
 
         getBudgetsAll(userid, currentMonth, currentYear)
-            .then((data) => { setBudgets(data) })
+            .then((data) => { 
+                console.log("budget page", data)
+                if(data === 'error')
+                    navigation.navigate('LogIn')
+                setBudgets(data) 
+            })
             .catch((err) => console.error(err));
     }, [userid, month]);
 
@@ -82,9 +78,6 @@ export default function BudgetPage() {
         setProgress(progres);
     }, [budgets]);
 
-    // useEffect(() => {
-    //     console.log("progres: ", budgets)
-    // }, [budgets]);
 
     const closeModal = (setModalVisibile) => {
         return () => { //functie care fara return ar fi fost apelata imediat

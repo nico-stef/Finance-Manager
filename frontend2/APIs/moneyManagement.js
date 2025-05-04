@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { API_URL } from '../variables.js';
-import * as SecureStore from 'expo-secure-store';
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { api } from './api.js';
 
 export const getCategories = async () => {
     try {
@@ -123,15 +122,16 @@ export const getBudgets = async (userId) => {
 
 export const getBudgetsAll = async (userId, currentMonth, currentYear) => {
     try {
-        const response = await axios.get(`${API_URL}/getBudgets/${userId}?month=${currentMonth}&year=${currentYear}`);
+        const response = await api.get(`/getBudgets/${userId}?month=${currentMonth}&year=${currentYear}`);
 
         return response.data;
     } catch (error) {
-        console.error('Eroare la cererea GET tags:', error);
+        console.log('Eroare la cererea GET budgets:', error);
+        return 'error';
     }
 };
 
-import { api } from './api.js';
+
 
 export const getDetailsBalance = async () => {
     try {
