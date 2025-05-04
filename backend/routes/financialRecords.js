@@ -90,7 +90,6 @@ router.patch("/expenses/update/:idexpense", async (req, res) => {
         }
 
     } catch (err) {
-        console.error("Eroare la executarea interogării:", err);
         return res.status(500).json({ message: "error at updating expense record" });
     }
 

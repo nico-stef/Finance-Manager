@@ -9,6 +9,7 @@ import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ActivityInd
 import Icon from 'react-native-vector-icons/FontAwesome';
 import LoginImage from '../images/login3.png'
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from 'expo-secure-store';
 import { login } from '../APIs/auth';
 import { androidClientId, API_URL } from '../variables';
 
@@ -74,6 +75,7 @@ export default function LogInScreen() {
         try {
             const response = await login(username, password);
             await AsyncStorage.setItem('accessToken', response.accessToken);
+            await SecureStore.setItemAsync('refreshToken',  response.refreshToken);
             navigation.navigate('Profile');
         } catch (err) {
             if(err.message == "Incorrect password")

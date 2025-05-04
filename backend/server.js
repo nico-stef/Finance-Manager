@@ -12,14 +12,15 @@ const configureRoutes = require('./routes/allRoutes');
 configureRoutes(app);
 
 //generarea de nou access token daca avem un refresh token
-app.post('/token', (req, res) => {
+app.post('/refreshToken', (req, res) => {
   const refreshToken = req.body.token;
+  console.log("refresh toke ", refreshToken)
 
   if (refreshToken == '') //daca refresh token e null
     return res.status(401).json({ message: 'refresh token null' });
 
   const data = [refreshToken];
-  const query = `SELECT username from users WHERE refreshToken = ?;`;
+  const query = `SELECT username, idusers from users WHERE refreshToken = ?;`;
 
   connection.query(query, data, (err, result) => {
     if (err) {
@@ -31,9 +32,9 @@ app.post('/token', (req, res) => {
 
       jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {//verificam daca refresh tokenul mai este valid
         if (err)
-          return res.status(403);
+          return res.sendStatus(403);
     
-        const accessToken = jwt.sign({name: user.name}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' }); //nu putem sa punem direct user pt ca
+        const accessToken = jwt.sign({name: user.name, userid: user.userid}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10s' }); //nu putem sa punem direct user pt ca
                                                                                                   // acum contine si alte date. cream obiectul {name: user.name}
         return res.json({ accessToken: accessToken });
       })

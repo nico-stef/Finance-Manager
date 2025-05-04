@@ -1,5 +1,7 @@
 import axios from 'axios';
 import { API_URL } from '../variables.js';
+import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const getCategories = async () => {
     try {
@@ -128,3 +130,53 @@ export const getBudgetsAll = async (userId, currentMonth, currentYear) => {
         console.error('Eroare la cererea GET tags:', error);
     }
 };
+
+import { api } from './api.js';
+
+export const getDetailsBalance = async () => {
+    try {
+      const response = await api.get('/getDetailsBalance');
+      return response.data;
+    } catch (error) {
+      console.log('Eroare la getDetailsBalance:', error);
+      return 'error';
+    }
+  };
+
+// export const getDetailsBalance = async (accessToken) => {
+//     try {
+//         const response = await axios.get(`${API_URL}/getDetailsBalance`, {
+//             headers: {
+//                 'Authorization': `Bearer ${accessToken}`
+//             }
+//         });
+//         return response.data;
+//     } catch (error) {
+//         if (error.response && error.response.status === 403) {
+           
+//             try {
+//                 const refreshToken = await SecureStore.getItemAsync('refreshToken');
+//                 const res = await axios.post(`${API_URL}/refreshToken`, {
+//                     token: refreshToken
+//                 });
+
+//                 const newAccessToken = res.data.accessToken;
+//                 await AsyncStorage.setItem('accessToken', newAccessToken);
+
+//                 // Refacem requestul cu token nou
+//                 const retryResponse = await axios.get(`${API_URL}/getDetailsBalance`, {
+//                     headers: {
+//                         'Authorization': `Bearer ${newAccessToken}`
+//                     }
+//                 });
+
+//                 return retryResponse.data;
+//             } catch (refreshError) {
+//                 console.log('Eroare la refresh:', refreshError);
+//                 await AsyncStorage.removeItem('accessToken');
+//                 await SecureStore.deleteItemAsync('refreshToken');
+//                 return 'error';
+//             }
+//         }
+//     }
+// };

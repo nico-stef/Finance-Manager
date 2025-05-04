@@ -5,6 +5,7 @@ const connection = require("../database");
 
 const usefulFunctions = require("../queryFunction");
 const queryFunction = usefulFunctions.queryAsync;
+const authenticateToken = usefulFunctions.authenticateToken;
 
 app.use(express.urlencoded({ extended: false })); //se ocupa de procesarea datelor trimise in format formular html
 app.use(express.json()); //conversie din JSON in obiecte js
@@ -249,6 +250,25 @@ router.get('/getBudgets/:id_user', async (req, res) => {
         return res.status(500).json({ message: "error at getting budgets" });
     }
 
+});
+
+router.get("/getDetailsBalance", authenticateToken, async (req, res) => {
+
+    const userId = req.user.userid;
+
+    if(!userId)
+        return res.status(500).json({ message: "userId is null" });
+
+    const query =  `SELECT SUM(total) as totalBalance
+                    FROM accounts
+                    WHERE id_user = ?;`;
+
+    try {
+        const result = await queryFunction(query, [userId]);
+        return res.status(200).json(result[0].totalBalance);
+    } catch (err) {
+        return res.status(500).json({ message: "error at getting details" });
+    }
 });
 
 module.exports = router;

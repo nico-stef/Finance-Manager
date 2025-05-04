@@ -11,6 +11,7 @@ function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator>
+      <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="Add expense" component={AddExpense} options={{ headerShown: false }}/>
       <Stack.Screen name="Add income" component={AddIncome} options={{ headerShown: false }}/>
       <Stack.Screen name="Charts" component={Charts} options={{ headerShown: false }}/>
@@ -34,7 +35,7 @@ function App() {
       
       <Stack.Screen name="User Data" component={SeeProfile}/>
       
-      <Stack.Screen name="Home" component={HomeScreen}/>
+      
       
       
       <Stack.Screen name="Create budget" component={ManageBudgets} options={{ headerShown: false }}/>

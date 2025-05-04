@@ -29,6 +29,7 @@ export const getIncomesRecords = async (account_id, userid) => {
     }
 };
 
+import { Alert } from 'react-native';
 export const updateExpense = async (record) => {
     try {
         const idexpense = record.idexpenses;
@@ -45,9 +46,12 @@ export const updateExpense = async (record) => {
             date: finalDate,
             note: record.note
         });
-        return response.data.message;
+        return response;
     } catch (error) {
-        console.error('Eroare la cererea PATCH update expense:', error);
+        if (error.response?.status === 500) {
+            Alert.alert('Warning', error.response.data.message || 'Not enough funds.');
+            console.log('Eroare la cererea add expense:', error.response.status);
+        }
     }
 };
 

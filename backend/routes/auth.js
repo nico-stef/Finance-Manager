@@ -102,8 +102,8 @@ router.post("/login", async (req, res) => {
 
     //generare de tokenuri
     const user = { name: username, userid: result[0].idusers };
-    const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
-    const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "7d" });
+    const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10s' });
+    const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "30s" });
 
     //introducere a refresh token in baza de date. daca e successful, returnam token-urile
     const dataforRefreshToken = [refreshToken, username];

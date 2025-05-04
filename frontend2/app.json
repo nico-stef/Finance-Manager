@@ -30,6 +30,9 @@
         "projectId": "daf021d4-b041-4014-87b2-69425c458b91"
       }
     },
-    "scheme": "frontend2"
+    "scheme": "frontend2",
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }
