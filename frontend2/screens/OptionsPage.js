@@ -58,6 +58,10 @@ export default function OptionsPage({ route }) {
     //get options
     const getOptionsAsync = async () => {
         const result = await getOptions(objectiveId);
+        if(result === 'error'){
+            navigation.navigate('LogIn');
+            return;
+        }
         console.log("optiuni ", result)
         setOptions(result);
     };
@@ -72,6 +76,10 @@ export default function OptionsPage({ route }) {
     useEffect(() => {
         const getObjectiveAsync = async () => {
             const result = await getObjective(objectiveId);
+            if(result === 'error'){
+                navigation.navigate('LogIn');
+                return;
+            }
             setObjective(result[0]);
         };
         getObjectiveAsync();
@@ -121,7 +129,11 @@ export default function OptionsPage({ route }) {
         const [isChecked, setChecked] = useState(item.chosen === 1);
 
         const handleCheckbox = async () => {
-            await updateOption(item.idOption, !isChecked);
+            const response = await updateOption(item.idOption, !isChecked);
+            if(response === 'error'){
+                navigation.navigate('LogIn');
+                return;
+            }
             setChecked(!isChecked);
             onCheckboxToggle(item.idOption);
         };
@@ -155,7 +167,11 @@ export default function OptionsPage({ route }) {
         ]);
 
     const handleDeleteObjective = async () => {
-        const result = await deleteObjective(objectiveId);
+        const response = await deleteObjective(objectiveId);
+        if(response === 'error'){
+            navigation.navigate('LogIn');
+            return;
+        }
         Alert.alert("", "Objective deleted successfully!");
         navigation.replace('SpendingPlanner');
     }

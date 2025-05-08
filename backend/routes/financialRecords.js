@@ -5,11 +5,12 @@ const connection = require("../database");
 
 const usefulFunctions = require("../queryFunction");
 const queryFunction = usefulFunctions.queryAsync;
+const authenticateToken = usefulFunctions.authenticateToken;
 
 app.use(express.urlencoded({ extended: false })); //se ocupa de procesarea datelor trimise in format formular html
 app.use(express.json()); //conversie din JSON in obiecte js
 
-router.get("/expenses", async (req, res) => {
+router.get("/expenses", authenticateToken, async (req, res) => {
 
     const { account_id, userid } = req.query; //daca vrem toate accounts, nu transmitem account_id in query. sau transmitem valori falsy
 
@@ -32,7 +33,7 @@ router.get("/expenses", async (req, res) => {
 
 })
 
-router.get("/incomes", async (req, res) => {
+router.get("/incomes", authenticateToken, async (req, res) => {
 
     const { account_id, userid } = req.query; //daca vrem toate accounts, nu transmitem account_id in query. sau transmitem valori falsy
 
@@ -54,7 +55,7 @@ router.get("/incomes", async (req, res) => {
 
 })
 
-router.patch("/expenses/update/:idexpense", async (req, res) => {
+router.patch("/expenses/update/:idexpense", authenticateToken, async (req, res) => {
 
     const idexpense = parseInt(req.params.idexpense, 10);
     console.log(idexpense)
@@ -95,7 +96,7 @@ router.patch("/expenses/update/:idexpense", async (req, res) => {
 
 })
 
-router.delete("/expenses/delete/:idexpense", async (req, res) => {
+router.delete("/expenses/delete/:idexpense", authenticateToken, async (req, res) => {
 
     const idexpense = parseInt(req.params.idexpense, 10);
 
@@ -123,7 +124,7 @@ router.delete("/expenses/delete/:idexpense", async (req, res) => {
 
 });
 
-router.patch("/incomes/update/:idincome", async (req, res) => {
+router.patch("/incomes/update/:idincome", authenticateToken, async (req, res) => {
 
     const idincome = parseInt(req.params.idincome, 10);
     const { date, amount, note } = req.body;
@@ -154,7 +155,7 @@ router.patch("/incomes/update/:idincome", async (req, res) => {
 
 });
 
-router.delete("/incomes/delete/:idincome", async (req, res) => {
+router.delete("/incomes/delete/:idincome", authenticateToken, async (req, res) => {
 
     const idincome = parseInt(req.params.idincome, 10);
 

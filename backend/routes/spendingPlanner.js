@@ -10,7 +10,7 @@ const authenticateToken = usefulFunctions.authenticateToken;
 app.use(express.urlencoded({ extended: false })); //se ocupa de procesarea datelor trimise in format formular html
 app.use(express.json()); //conversie din JSON in obiecte js
 
-router.post('/addObjective', async (req, res) => {
+router.post('/addObjective', authenticateToken, async (req, res) => {
 
     const { name, amount, due_date, accountId, budgetId, note, userId, categoryId } = req.body;
 
@@ -63,7 +63,7 @@ const storage = multer.diskStorage({
   })
   const upload = multer({ storage })
 
-router.post('/addOption', upload.single('photo'), async (req, res) => {
+router.post('/addOption', authenticateToken, upload.single('photo'), async (req, res) => {
 
     const imagePath = req?.file?.path;
     const { name, price, note, objectiveId } = req.body;
@@ -86,7 +86,7 @@ router.post('/addOption', upload.single('photo'), async (req, res) => {
 
 });
 
-router.get("/getOptions", async (req, res) => {
+router.get("/getOptions", authenticateToken, async (req, res) => {
 
     const {objectiveId} = req.query;
 
@@ -105,7 +105,7 @@ router.get("/getOptions", async (req, res) => {
     }
 });
 
-router.get("/getOption", async (req, res) => {
+router.get("/getOption", authenticateToken, async (req, res) => {
 
     const {optionId} = req.query;
 
@@ -124,7 +124,7 @@ router.get("/getOption", async (req, res) => {
     }
 });
 
-router.get("/getObjective", async (req, res) => {
+router.get("/getObjective", authenticateToken, async (req, res) => {
 
     const {objectiveId} = req.query;
 
@@ -149,7 +149,7 @@ router.get("/getObjective", async (req, res) => {
     }
 });
 
-router.delete("/deleteObjective/:idexpense", async (req, res) => {
+router.delete("/deleteObjective/:idexpense", authenticateToken, async (req, res) => {
 
     const idObjective = parseInt(req.params.idexpense, 10);
 
@@ -165,7 +165,7 @@ router.delete("/deleteObjective/:idexpense", async (req, res) => {
 
 });
 
-router.delete("/deleteOption/:idOption", async (req, res) => {
+router.delete("/deleteOption/:idOption", authenticateToken, async (req, res) => {
 
     const idOption = parseInt(req.params.idOption, 10);
 
@@ -181,7 +181,7 @@ router.delete("/deleteOption/:idOption", async (req, res) => {
 
 });
 
-router.patch("/updateOption/:idOption", async (req, res) => {
+router.patch("/updateOption/:idOption", authenticateToken, async (req, res) => {
 
     const idOption = parseInt(req.params.idOption, 10);
     const { chosen } = req.body;

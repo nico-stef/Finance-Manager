@@ -53,13 +53,21 @@ export default function SpendingPlanner() {
     const getObjectivesAsync = async () => {
         if (token) {
             const data = await getObjectives(token);
+            if(data === 'error'){
+                navigation.navigate('LogIn');
+                return;
+            }
             setObjectives(data);
         }
     };
 
     useFocusEffect(
         useCallback(() => {
-            getObjectivesAsync();
+            const response = getObjectivesAsync();
+            if(response === 'error'){
+                navigation.navigate('LogIn');
+                return;
+            }
         }, [token])
     );
 

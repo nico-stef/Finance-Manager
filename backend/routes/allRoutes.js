@@ -5,6 +5,7 @@ var moneyManagement = require("./moneyManagement")
 var expensesPerCategory = require('./chartExpenses')
 var financialRecords = require('./financialRecords')
 var planner = require('./spendingPlanner')
+var transactionsCSV = require('./transactions_CSV')
 
 module.exports = function(app) {
   app.use(express.json());//converteste datele primite in format JSON in obiecte js
@@ -15,4 +16,5 @@ module.exports = function(app) {
   app.use("/chart", expensesPerCategory);
   app.use('/records', financialRecords);
   app.use('/planner', planner);
+  app.use('/', transactionsCSV);
 };

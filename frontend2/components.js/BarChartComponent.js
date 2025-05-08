@@ -56,6 +56,10 @@ function BarChartComponent() {
     useEffect(() => {
         const getBudgetComparissonDataAsync = async () => {
             const res = await getBudgetComparissonData(23);
+            if(res === 'error'){
+                navigation.navigate('LogIn');
+                return;
+            }
             setExpenses(res.expensesMonthly);
             setAmountBudgets(res.adjustedBudgets);
         };

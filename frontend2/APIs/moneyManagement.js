@@ -4,52 +4,21 @@ import { api } from './api.js';
 
 export const getCategories = async () => {
     try {
-        const response = await axios.get(`${API_URL}/getCategories`);
+        const response = await api.get(`${API_URL}/getCategories`);
         return response.data;
     } catch (error) {
-        console.error('Eroare la cererea GET categories:', error);
+        console.log('Eroare la cererea GET categories:', error);
+        return 'error';
     }
 };
 
 export const getAccounts = async (userId) => {
     try {
-        const response = await axios.get(`${API_URL}/getAccounts/${userId}`);
+        const response = await api.get(`${API_URL}/getAccounts/${userId}`);
         return response.data;
     } catch (error) {
-        console.error('Eroare la cererea GET accounts:', error);
-    }
-};
-
-export const getTags = async (userId) => {
-    try {
-        const response = await axios.get(`${API_URL}/getTags/${userId}`);
-        return response.data;
-    } catch (error) {
-        console.error('Eroare la cererea GET tags:', error);
-    }
-};
-
-export const addTag = async (userId, tag) => {
-    try {
-        const response = await axios.post(`${API_URL}/addTag`,
-            {
-                id_user: userId,
-                tag: tag
-            });
-        return response.data;
-    } catch (error) {
-        console.log('Eroare la cererea ADD tag:', error);
-    }
-};
-
-export const deleteTags = async (userId, tags) => {
-    try {
-        const response = await axios.delete(`${API_URL}/deleteTags`, {
-            data: { user_id: userId, idTags: tags }
-        });
-        return response.data;
-    } catch (error) {
-        console.log('Eroare la cererea DELETE tag:', error);
+        console.log('Eroare la cererea GET accounts:', error);
+        return 'error';
     }
 };
 
@@ -72,13 +41,15 @@ export const addExpense = async (userId, tags, amount, date, categoryId, Account
         if (error.response?.status === 400) {
             Alert.alert('Warning', error.response.data || 'Not enough funds.');
             console.log('Eroare la cererea add expense:', error);
+            return;
         }
+        return 'error';
     }
 };
 
 export const addIncome = async (userId, amount, date, accountId, note) => {
     try {
-        const response = await axios.post(`${API_URL}/addIncome`,
+        const response = await api.post(`${API_URL}/addIncome`,
             {
                 id_user: userId,
                 amount,
@@ -89,24 +60,26 @@ export const addIncome = async (userId, amount, date, accountId, note) => {
         return response.data;
     } catch (error) {
         console.log('Eroare la cererea ADD income:', error);
+        return 'error';
     }
 };
 
 export const addBudget = async (id_user, name, amount, date, freq, note) => {
     try {
-        const response = await axios.post(`${API_URL}/addBudget`,
+        const response = await api.post(`${API_URL}/addBudget`,
             {
                 id_user, name, amount, date, freq, note
             });
         return response.data;
     } catch (error) {
         console.log('Eroare la cererea ADD budget:', error);
+        return 'error';
     }
 };
 
 export const getBudgets = async (userId) => {
     try {
-        const response = await axios.get(`${API_URL}/getBudgetsOptions/${userId}`);
+        const response = await api.get(`${API_URL}/getBudgetsOptions/${userId}`);
         // const budgetNames = response.data.map(item => item.name)
         const options = response.data.map(item => ({
             label: item.name,    // Valoarea va fi folosită atât pentru 'label' cât și pentru 'value'
@@ -116,7 +89,8 @@ export const getBudgets = async (userId) => {
         }));
         return options; //un array cu obiecte bugete
     } catch (error) {
-        console.error('Eroare la cererea GET tags:', error);
+        console.log('Eroare la cererea GET tags:', error);
+        return 'error';
     }
 };
 

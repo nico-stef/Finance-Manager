@@ -88,6 +88,10 @@ export default function ManageBudgets() {
 
             if (username && token) {
                 const user = await getUserData(username, token);
+                if(user === 'error'){
+                    navigation.navigate('LogIn');
+                    return;
+                }
                 setUser(user);
             }
         };
@@ -109,7 +113,11 @@ export default function ManageBudgets() {
             Alert.alert("Warning", "You need to complete the necessary fields!");
         else {
             console.log("luna:", month);
-            await addBudget(user.id, nameBudget, amount, month, frequency, note);
+            const response = await addBudget(user.id, nameBudget, amount, month, frequency, note);
+            if(response === 'error'){
+                navigation.navigate('LogIn');
+                return;
+            }
             Alert.alert("Success", "Budget added successfully!");
         }
     }

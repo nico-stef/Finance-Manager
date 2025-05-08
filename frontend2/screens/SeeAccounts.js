@@ -77,6 +77,10 @@ function SeeAccounts() {
 
     const handleDeleteAccount = async (idAcc) => {
         const result = await deleteAccount(idAcc);
+        if(result === 'error'){
+            navigation.navigate('LogIn');
+            return;
+        }
         if (result.status === 200) {
             Alert.alert("", 'Account deletes successfully!');
             getAccountsAsync();

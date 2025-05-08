@@ -80,6 +80,10 @@ export default function AddIncome() {
 
             if (username && token) {
                 const user = await getUserData(username, token);
+                if(user === 'error'){
+                    navigation.navigate('LogIn');
+                    return;
+                }
                 setUser(user);
             }
         };
@@ -92,6 +96,10 @@ export default function AddIncome() {
         const fetchAccounts = async () => {
             try {
                 const data = await getAccounts(user.id);
+                if(data === 'error'){
+                    navigation.navigate('LogIn');
+                    return;
+                }
                 setAccounts(data);
             } catch (err) {
                 setError("There was an error fetching categories.");
@@ -124,7 +132,11 @@ export default function AddIncome() {
         if (!amount || !account)
             Alert.alert("Warning", "You need to complete the necessary fields!");
         else {
-            await addIncome(user.id, amount, date, account.idaccounts, note);
+            const response = await addIncome(user.id, amount, date, account.idaccounts, note);
+            if(response === 'error'){
+                navigation.navigate('LogIn');
+                return;
+            }
             Alert.alert("Success", "Income added successfully!");
         }
     }

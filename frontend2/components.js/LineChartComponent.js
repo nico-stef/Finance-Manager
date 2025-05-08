@@ -18,6 +18,11 @@ export default function LineChartComponent() {
   useEffect(() => {
     const getExpenseTendenciesAsync = async () => {
       const res = await getExpenseTendencies(23);
+      console.log(res);
+      if(res === 'error'){
+        navigation.navigate('LogIn');
+        return;
+    }
       setDataExpenses(res);
     };
     getExpenseTendenciesAsync();

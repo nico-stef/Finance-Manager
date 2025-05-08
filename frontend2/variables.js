@@ -1,4 +1,4 @@
-export const API_URL = "http://192.168.130.36:3000"
+export const API_URL = "http://192.168.0.100:3000"
 export const androidClientId = "934423761883-aq3mq2spmc2bb2srjrvhmkf7hk30ah1v.apps.googleusercontent.com"
 
 

@@ -53,21 +53,6 @@ export default function AddExpense() {
             const user = jwtDecode(accessToken);
             setUsername(user.name);
 
-            if (!accessToken) {
-                console.log('Nu există access token!');
-                setIsLoggedIn(false);
-                navigation.navigate('LogIn');
-                return;
-            }
-
-            const currentTime = Date.now() / 1000; //timpul curent în secunde
-            if (user.exp < currentTime) {
-                console.log('Token-ul a expirat!');
-                setIsLoggedIn(false);
-                navigation.navigate('LogIn');
-                return;
-            }
-
         } catch (error) {
             console.error("Eroare la recuperarea token-ului:", error);
         }
@@ -91,6 +76,10 @@ export default function AddExpense() {
 
             if (username && token) {
                 const user = await getUserData(username, token);
+                if(user === 'error'){
+                    navigation.navigate('LogIn');
+                    return;
+                }
                 setUser(user);
             }
         };
@@ -103,6 +92,10 @@ export default function AddExpense() {
         const fetchCategories = async () => {
             try {
                 const data = await getCategories();
+                if(result === 'error'){
+                    navigation.navigate('LogIn');
+                    return;
+                }
                 setCategories(data);
             } catch (err) {
                 setError("There was an error fetching categories.");
@@ -119,6 +112,10 @@ export default function AddExpense() {
     useEffect(() => {
         const getBudgetsAsync = async () => {
             const response = await getBudgets(user.id);
+            if(response === 'error'){
+                navigation.navigate('LogIn');
+                return;
+            }
             setBudgetOptions(response);
         };
 
@@ -132,6 +129,10 @@ export default function AddExpense() {
         const fetchAccounts = async () => {
             try {
                 const data = await getAccounts(user.id);
+                if(data === 'error'){
+                    navigation.navigate('LogIn');
+                    return;
+                }
                 setAccounts(data);
             } catch (err) {
                 setError("There was an error fetching categories.");
@@ -212,7 +213,11 @@ export default function AddExpense() {
         if (!amount || !category || !account)
             Alert.alert("Warning", "You need to complete the necessary fields!");
         else {
-            const response = await addExpense(user.id, tagIds, amount, date, category.idcategories, account.idaccounts, note, budget.idBudget);   
+            const response = await addExpense(user.id, tagIds, amount, date, category.idcategories, account.idaccounts, note, budget.idBudget);  
+            if(response === 'error'){
+                navigation.navigate('LogIn');
+                return;
+            } 
             if (response.status === 200) {
                 
                 Alert.alert("Success", "Expense added successfully!");

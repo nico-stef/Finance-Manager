@@ -27,6 +27,10 @@ export default function SeeOption({ route }) {
     useEffect(() => {
         const getOptionAsync = async () => {
             const result = await getOption(optionId);
+            if(result === 'error'){
+                navigation.navigate('LogIn');
+                return;
+            }
             setOption(result[0]);
             setNameOption(result[0].name_option);
             setAmount(result[0].price);
@@ -50,7 +54,11 @@ export default function SeeOption({ route }) {
         ]);
 
     const handleDeleteOption = async () => {
-        const result = await deleteOption(optionId);
+        const response = await deleteOption(optionId);
+        if(response === 'error'){
+            navigation.navigate('LogIn');
+            return;
+        }
         Alert.alert("", "Option deleted successfully!");
         navigation.replace('OptionsPage', { objectiveId });
     }

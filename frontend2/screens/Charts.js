@@ -57,23 +57,6 @@ export default function Charts() {
             const user = jwtDecode(accessToken);
             setUserid(user.userid);
 
-            if (!accessToken) {
-                console.log('Nu există access token!');
-                setIsLoggedIn(false);
-                await AsyncStorage.removeItem('accessToken');
-                navigation.navigate('LogIn');
-                return;
-            }
-
-            const currentTime = Date.now() / 1000; //timpul curent în secunde
-            if (user.exp < currentTime) {
-                console.log('Token-ul a expirat!');
-                setIsLoggedIn(false);
-                await AsyncStorage.removeItem('accessToken');
-                navigation.navigate('LogIn');
-                return;
-            }
-
         } catch (error) {
             console.error("Eroare la recuperarea token-ului:", error);
         }
@@ -92,6 +75,10 @@ export default function Charts() {
         const fetchAccounts = async () => {
             try {
                 const data = await getAccounts(userid);
+                if(data === 'error'){
+                    navigation.navigate('LogIn');
+                    return;
+                }
                 data.push({ "name": "total" })
                 setAccounts(data);
             } catch (err) {
@@ -112,6 +99,10 @@ export default function Charts() {
         const fetchExpensesData = async (period, account_id, date, start_week, end_week, month, year, user_id) => {
             try {
                 const data = await getExpensesPerCateogory(period, date, account_id, start_week, end_week, month, year, user_id);
+                if(data === 'error'){
+                    navigation.navigate('LogIn');
+                    return;
+                }
 
                 let sum = 0;
                 data.forEach((el) => sum += parseFloat(el.total)); //calculam totalul cheltuit

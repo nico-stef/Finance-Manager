@@ -70,6 +70,10 @@ export default function FinancialRecords() {
     useEffect(() => {
         getAccounts(userid)
             .then((data) => {
+                if (data === 'error') {
+                    navigation.navigate('LogIn');
+                    return;
+                }
                 data.push({ "idaccounts": "total", "name": "total" });
                 setAccounts(data)
             })
@@ -79,11 +83,23 @@ export default function FinancialRecords() {
     //get records(expenses and incomes) based off the account or useird if we want all acounts
     useEffect(() => {
         getExpensesRecords(account.idaccounts, userid)
-            .then((data) => setExpenseRecords(data))
+            .then((data) => {
+                if(data === 'error'){
+                    navigation.navigate('LogIn');
+                    return;
+                }
+                setExpenseRecords(data);
+            })
             .catch((err) => console.error(err));
 
         getIncomesRecords(account.idaccounts, userid)
-            .then((data) => setIncomeRecords(data))
+            .then((data) => {
+                if (data === 'error') {
+                    navigation.navigate('LogIn');
+                    return;
+                }
+                setIncomeRecords(data);
+            })
             .catch((err) => console.error(err));
     }, [accounts, account]);
 
@@ -92,6 +108,10 @@ export default function FinancialRecords() {
         const fetchCategories = async () => {
             try {
                 const data = await getCategories();
+                if (data === 'error') {
+                    navigation.navigate('LogIn');
+                    return;
+                }
                 setCategories(data);
             } catch (err) {
                 setError("There was an error fetching categories.");
@@ -111,7 +131,7 @@ export default function FinancialRecords() {
             setFlatlistData(expenseRecords);
         else if (expenseOrIncome === 2)
             setFlatlistData(incomeRecords);
-        
+
     }, [expenseOrIncome, expenseRecords, incomeRecords, account]);
 
     const toggleMenu = () => {
@@ -177,7 +197,7 @@ export default function FinancialRecords() {
         return (
             <TouchableOpacity style={styles.cardRecord} onPress={() => { setModalRecordVisible(true); handleRecordClick(item) }}>
 
-                <View style={{ flexDirection: 'row', alignItems: 'center', width: '80%'}}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', width: '80%' }}>
                     {item.icon ? (<Icon name={item.icon} size={20} style={styles.icon} />) : (<Icon name="money-bill-wave" color="green" size={20} style={styles.icon} />)}
                     <View style={{ marginLeft: 20 }}>
                         <Text style={[styles.buttonText, { fontWeight: 'bold' }]}>{formatDate(item.date)}</Text>
@@ -186,7 +206,7 @@ export default function FinancialRecords() {
                     </View>
                 </View>
 
-                {expenseOrIncome === 1 ? (<Text style={[styles.buttonText, { fontWeight: 'bold', color: "red"}]}>-${item.amount}</Text>) :
+                {expenseOrIncome === 1 ? (<Text style={[styles.buttonText, { fontWeight: 'bold', color: "red" }]}>-${item.amount}</Text>) :
                     (<Text style={[styles.buttonText, { fontWeight: 'bold', color: "green" }]}>+${item.amount}</Text>)}
 
             </TouchableOpacity>
@@ -195,12 +215,20 @@ export default function FinancialRecords() {
 
     //update record
     const handleUpdateRecord = async () => {
-        if (expenseOrIncome === 1){
-            await updateExpense(selectedRecord);
+        if (expenseOrIncome === 1) {
+            const response = await updateExpense(selectedRecord);
+            if (response === 'error') {
+                navigation.navigate('LogIn');
+                return;
+            }
             setExpenseRecords(prev => prev.map(expense => expense.idexpenses === selectedRecord.idexpenses ? selectedRecord : expense));
         }
-        else if (expenseOrIncome === 2){
-            await updateIncome(selectedRecord);
+        else if (expenseOrIncome === 2) {
+            const response = await updateIncome(selectedRecord);
+            if (response === 'error') {
+                navigation.navigate('LogIn');
+                return;
+            }
             setIncomeRecords(prev => prev.map(income => income.idincomes === selectedRecord.idincomes ? selectedRecord : income));
         }
         setModalRecordVisible(!modalRecordVisible);
@@ -208,13 +236,21 @@ export default function FinancialRecords() {
     }
 
     //delete record
-    const handleDeleteRecord = async () =>{
-        if (expenseOrIncome === 1){
-            await deleteExpense(selectedRecord);
+    const handleDeleteRecord = async () => {
+        if (expenseOrIncome === 1) {
+            const response = await deleteExpense(selectedRecord);
+            if (response === 'error') {
+                navigation.navigate('LogIn');
+                return;
+            }
             setExpenseRecords(prev => prev.filter(expense => expense.idexpenses !== selectedRecord.idexpenses));
         }
-        else if (expenseOrIncome === 2){
-            await deleteIncome(selectedRecord);
+        else if (expenseOrIncome === 2) {
+            const response = await deleteIncome(selectedRecord);
+            if (response === 'error') {
+                navigation.navigate('LogIn');
+                return;
+            }
             setIncomeRecords(prev => prev.filter(income => income.idincomes !== selectedRecord.idincomes));
         }
         setModalRecordVisible(!modalRecordVisible);

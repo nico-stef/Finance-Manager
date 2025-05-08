@@ -60,9 +60,10 @@ export default function BudgetPage() {
 
         getBudgetsAll(userid, currentMonth, currentYear)
             .then((data) => { 
-                console.log("budget page", data)
-                if(data === 'error')
-                    navigation.navigate('LogIn')
+                if(data === 'error'){
+                    navigation.navigate('LogIn');
+                    return;
+                }
                 setBudgets(data) 
             })
             .catch((err) => console.error(err));
@@ -140,13 +141,13 @@ export default function BudgetPage() {
                         <Text style={[styles.buttonText, { fontSize: 16, fontWeight: 'bold' }]}>+ new budget</Text>
                     </TouchableOpacity>
 
-                    <FlatList
+                    {budgets.length > 0 && <FlatList
                         data={budgets}
                         renderItem={({ item }) => <Record item={item} />}
                         keyExtractor={item => item.idbudgets}
                         initialNumToRender={10}
                         contentContainerStyle={{ paddingBottom: 80 }}
-                    />
+                    />}
 
                 </View>
 

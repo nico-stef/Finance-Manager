@@ -33,23 +33,6 @@ export default function ProfileScreen() {
             const user = jwtDecode(accessToken);
             setUsername(user.name);
 
-            if (!accessToken) {
-                console.log('Nu există access token!');
-                setIsLoggedIn(false);
-                await AsyncStorage.removeItem('accessToken');
-                navigation.navigate('LogIn');
-                return;
-            }
-
-            const currentTime = Date.now() / 1000; //timpul curent în secunde
-            if (user.exp < currentTime) {
-                console.log('Token-ul a expirat!');
-                setIsLoggedIn(false);
-                await AsyncStorage.removeItem('accessToken');
-                navigation.navigate('LogIn');
-                return;
-            }
-
         } catch (error) {
             console.error("Eroare la recuperarea token-ului:", error);
         }
@@ -73,6 +56,10 @@ export default function ProfileScreen() {
 
             if (username && token) {
                 const user = await getUserData(username, token);
+                if(user === 'error'){
+                    navigation.navigate('LogIn');
+                    return;
+                }
                 setUser(user);
             }
         };
@@ -109,7 +96,11 @@ export default function ProfileScreen() {
 
     const handleDeleteAccount = async (username, accessToken) => {
         try {
-            await deleteUser(username, accessToken);
+            const response = await deleteUser(username, accessToken);
+            if(response === 'error'){
+                navigation.navigate('LogIn');
+                return;
+            }
             Alert.alert('Succes', 'Your account has been successfully deleted!');
             navigation.navigate('LogIn');
         } catch (err) {

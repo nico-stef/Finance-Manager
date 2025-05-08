@@ -62,6 +62,10 @@ function SeeProfile() {
 
             if (username && token) {
                 const user = await getUserData(username, token);
+                if(user === 'error'){
+                    navigation.navigate('LogIn');
+                    return;
+                }
                 setUser(user);
             }
         };

@@ -66,6 +66,10 @@ export default function CreateObjective({ route }) {
     useEffect(() => {
         const getBudgetsAsync = async () => {
             const response = await getBudgets(userId);
+            if(response === 'error'){
+                navigation.navigate('LogIn');
+                return;
+            }
             setBudgetOptions(response);
         };
 
@@ -78,6 +82,10 @@ export default function CreateObjective({ route }) {
         const fetchAccounts = async () => {
             try {
                 const data = await getAccounts(userId);
+                if(data === 'error'){
+                    navigation.navigate('LogIn');
+                    return;
+                }
                 setAccounts(data);
             } catch (err) {
                 setError("There was an error fetching categories.");
@@ -95,6 +103,10 @@ export default function CreateObjective({ route }) {
             if (!nameObjective || !amount || !account || !category)
                 Alert.alert('Warning', "You haven't completed necessary fields!");
             const response = await addObjective(nameObjective, amount, date, account.idaccounts, budget.idBudget, note, userId, category.idcategories);
+            if(response === 'error'){
+                navigation.navigate('LogIn');
+                return;
+            }
             if (response === 200) {
                 Alert.alert('Success', "Objective successfully created!");
                 setNameObjective("");
@@ -113,6 +125,10 @@ export default function CreateObjective({ route }) {
         const getCategoriesAsync = async () => {
 
             const data = await getCategories();
+            if(data === 'error'){
+                navigation.navigate('LogIn');
+                return;
+            }
             const newArray = data.map(item => ({
                 name: item.category, //category va avea name ca sa putem itera prin el cu componenta MyModal
                 icon: item.icon,

@@ -72,6 +72,10 @@ function EditProfile() {
 
             if (username && token) {
                 const user = await getUserData(username, token);
+                if(user === 'error'){
+                    navigation.navigate('LogIn');
+                    return;
+                }
                 setUser(user);
                 setName(user.name);
                 setPhone(user.phone);
@@ -84,7 +88,11 @@ function EditProfile() {
 
     const handleUpdate = async (username, name, phone, token) => {
         try {
-            await updateUser(username, name, phone, token);
+            const response = await updateUser(username, name, phone, token);
+            if(response === 'error'){
+                navigation.navigate('LogIn');
+                return;
+            }
             Alert.alert('Success', 'User data updated sucessfully!');
         } catch (error) {
             console.error("Eroare la user update:", error);

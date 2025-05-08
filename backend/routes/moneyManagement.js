@@ -10,7 +10,7 @@ const authenticateToken = usefulFunctions.authenticateToken;
 app.use(express.urlencoded({ extended: false })); //se ocupa de procesarea datelor trimise in format formular html
 app.use(express.json()); //conversie din JSON in obiecte js
 
-router.get("/getCategories", async (req, res) => {
+router.get("/getCategories", authenticateToken, async (req, res) => {
 
     const query = `SELECT * FROM categories;`;
 
@@ -24,7 +24,7 @@ router.get("/getCategories", async (req, res) => {
 
 });
 
-router.get('/getAccounts/:id_user', async (req, res) => {
+router.get('/getAccounts/:id_user', authenticateToken, async (req, res) => {
 
     const { id_user } = req.params;
 
@@ -44,66 +44,7 @@ router.get('/getAccounts/:id_user', async (req, res) => {
     }
 });
 
-router.get('/getTags/:id_user', async (req, res) => {
-
-    const { id_user } = req.params;
-
-    if (!id_user) {
-        return res.status(400).json({ error: 'id_user null!' });
-    };
-
-    const query = `SELECT * FROM tags WHERE user_id = ?;`;
-    const data = [id_user];
-
-    try {
-        const result = await queryFunction(query, data); //array de obiecte cu tag-urile
-        return res.status(200).json(result);
-    } catch (err) {
-        console.error("Eroare la executarea interogării:", err);
-        return res.status(500).json({ message: "error at getting tags" });
-    }
-});
-
-router.post('/addTag', async (req, res) => {
-
-    const { id_user, tag } = req.body;
-
-    if (!id_user || !tag) {
-        return res.status(400).json({ error: 'id user or tag null!' });
-    };
-
-    const query = `INSERT INTO tags (name, user_id) VALUES(?, ?);`;
-    const data = [tag, id_user];
-
-    try {
-        await queryFunction(query, data);
-        return res.status(200).json("Row has been inserted into tags");
-    } catch (err) {
-        console.error("Eroare la executarea interogării:", err);
-        return res.status(500).json({ message: "error add into tags" });
-    }
-});
-
-router.delete('/deleteTags', async (req, res) => {
-    const { user_id, idTags } = req.body;
-
-    if (!user_id || !idTags) {
-        return res.status(400).json({ error: 'null fields!' });
-    };
-
-    const query = `DELETE FROM tags WHERE user_id = ? AND idtags IN (?);`;
-    const data = [user_id, idTags];
-
-    try {
-        await queryFunction(query, data);
-        return res.status(200).json("Tags deleted succesfully");
-    } catch (err) {
-        console.error("Eroare la executarea interogării:", err);
-        return res.status(500).json({ message: "error delete tags" });
-    }
-});
-
-router.post('/addExpense', async (req, res) => {
+router.post('/addExpense', authenticateToken, async (req, res) => {
 
     const { id_user, amount, date, category_id, account_id, tags, note, budget_id } = req.body;
 
@@ -152,7 +93,7 @@ const config = {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE
 };
-router.post('/addIncome', async (req, res) => {
+router.post('/addIncome', authenticateToken, async (req, res) => {
 
     const { id_user, amount, date, account_id, note } = req.body;
 
@@ -187,7 +128,7 @@ router.post('/addIncome', async (req, res) => {
 
 //BUDGETS
 
-router.post('/addBudget', async (req, res) => {
+router.post('/addBudget', authenticateToken, async (req, res) => {
 
     const { id_user, name, amount, date, freq, note } = req.body;
 
@@ -211,7 +152,7 @@ router.post('/addBudget', async (req, res) => {
     }
 });
 
-router.get('/getBudgetsOptions/:id_user', async (req, res) => {
+router.get('/getBudgetsOptions/:id_user', authenticateToken, async (req, res) => {
 
     const { id_user } = req.params;
 
@@ -228,7 +169,7 @@ router.get('/getBudgetsOptions/:id_user', async (req, res) => {
 
 });
 
-router.get('/getBudgets/:id_user', async (req, res) => {
+router.get('/getBudgets/:id_user', authenticateToken, async (req, res) => {
 
     const { id_user } = req.params;
     const month = parseInt(req.query.month);

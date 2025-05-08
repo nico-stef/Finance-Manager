@@ -1,9 +1,10 @@
 import axios from 'axios';
 import { API_URL } from '../variables.js';
+import { api } from './api.js';
 
 export const getExpensesRecords = async (account_id, userid) => {
     try {
-        const response = await axios.get(`${API_URL}/records/expenses`, {
+        const response = await api.get(`${API_URL}/records/expenses`, {
             params: {
                 account_id,
                 userid
@@ -11,13 +12,14 @@ export const getExpensesRecords = async (account_id, userid) => {
         });
         return response.data;
     } catch (error) {
-        console.error('Eroare la cererea GET expense records:', error);
+        console.log('Eroare la cererea GET expense records:', error);
+        return 'error';
     }
 };
 
 export const getIncomesRecords = async (account_id, userid) => {
     try {
-        const response = await axios.get(`${API_URL}/records/incomes`, {
+        const response = await api.get(`${API_URL}/records/incomes`, {
             params: {
                 account_id,
                 userid
@@ -25,7 +27,8 @@ export const getIncomesRecords = async (account_id, userid) => {
         });
         return response.data;
     } catch (error) {
-        console.error('Eroare la cererea GET incomes records:', error);
+        console.log('Eroare la cererea GET incomes records:', error);
+        return 'error';
     }
 };
 
@@ -40,7 +43,7 @@ export const updateExpense = async (record) => {
         const day = String(localDate.getDate()).padStart(2, '0');
         const finalDate =  `${year}-${month}-${day}`;
         
-        const response = await axios.patch(`${API_URL}/records/expenses/update/${idexpense}`, {
+        const response = await api.patch(`${API_URL}/records/expenses/update/${idexpense}`, {
             category: record.category,
             amount: record.amount,
             date: finalDate,
@@ -51,6 +54,8 @@ export const updateExpense = async (record) => {
         if (error.response?.status === 500) {
             Alert.alert('Warning', error.response.data.message || 'Not enough funds.');
             console.log('Eroare la cererea add expense:', error.response.status);
+        }else{
+            return 'error';
         }
     }
 };
@@ -58,10 +63,11 @@ export const updateExpense = async (record) => {
 export const deleteExpense = async (record) => {
     try {
         const idexpense = record.idexpenses;
-        const response = await axios.delete(`${API_URL}/records/expenses/delete/${idexpense}`);
+        const response = await api.delete(`${API_URL}/records/expenses/delete/${idexpense}`);
         return response.data.message;
     } catch (error) {
-        console.error('Eroare la cererea PATCH update expense:', error);
+        console.log('Eroare la cererea PATCH update expense:', error);
+        return 'error';
     }
 };
 
@@ -76,23 +82,25 @@ export const updateIncome = async (record) => {
         const day = String(localDate.getDate()).padStart(2, '0');
         const finalDate =  `${year}-${month}-${day}`;
 
-        const response = await axios.patch(`${API_URL}/records/incomes/update/${idincome}`, {
+        const response = await api.patch(`${API_URL}/records/incomes/update/${idincome}`, {
             amount: record.amount,
             date: finalDate,
             note: record.note
         });
         return response.data.message;
     } catch (error) {
-        console.error('Eroare la cererea PATCH update income:', error);
+        console.log('Eroare la cererea PATCH update income:', error);
+        return 'error';
     }
 };
 
 export const deleteIncome = async (record) => {
     try {
         const idincome = record.idincomes;
-        const response = await axios.delete(`${API_URL}/records/incomes/delete/${idincome}`);
+        const response = await api.delete(`${API_URL}/records/incomes/delete/${idincome}`);
         return response.data.message;
     } catch (error) {
-        console.error('Eroare la cererea DELETE income:', error);
+        console.log('Eroare la cererea DELETE income:', error);
+        return 'error';
     }
 };

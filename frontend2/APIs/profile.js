@@ -1,34 +1,28 @@
 import axios from 'axios';
 import { API_URL } from '../variables.js';
+import { api } from './api.js';
 
 export const getUserData = async (username, accessToken) => {
     try {
-        const response = await axios.get(`${API_URL}/user/getUser`, {
+        const response = await api.get(`${API_URL}/user/getUser`, {
             params: {
                 username: username
             },
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            }
         });
 
         return response.data;
     } catch (error) {
-        console.error('Eroare la cererea GET:', error);
+        console.log('Eroare la cererea GET:', error);
+        return 'error';
     }
 };
 
 export const updateUser = async (username, name, phone, accessToken) => {
     try {
-            const response = await axios.put(`${API_URL}/user/updateUser`,{
+            const response = await api.put(`${API_URL}/user/updateUser`,{
                     username,
                     name,
                     phone
-                },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`
-                    }
                 });
             
         return response.data;
@@ -38,22 +32,20 @@ export const updateUser = async (username, name, phone, accessToken) => {
             throw new Error(error.response.data.message);
         } else { //serverul nu a raspuns
             console.log("Error:", error.message);
-            throw new Error("Eroare. Serverul nu a raspuns");
+            return 'error';
         }
     }
 };
 
 export const deleteUser = async (username, accessToken) => {
     try {
-        const response = await axios.delete(`${API_URL}/user/deleteUser`, {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            },
+        const response = await axios.api(`${API_URL}/user/deleteUser`, {
             params: { username: username },
           });
 
         return response.data;
     } catch (error) {
-        console.error('Eroare la cererea GET:', error);
+        console.log('Eroare la cererea GET:', error);
+        return 'error';
     }
 };
