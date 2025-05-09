@@ -59,6 +59,10 @@ export default function SideMenuAnimated({isOpen}) {
                     <Text style={{ color: 'black', fontSize: 20, fontFamily: 'serif' }}>Transactions</Text>
                 </TouchableOpacity>
 
+                <TouchableOpacity style={{ marginTop: 20 }} onPress={() => navigation.navigate("UploadTransactions")}>
+                    <Text style={{ color: 'black', fontSize: 20, fontFamily: 'serif' }}>Import Transactions</Text>
+                </TouchableOpacity>
+
                 <TouchableOpacity style={{ marginTop: 20 }} onPress={() => navigation.navigate("Profile")}>
                     <Text style={{ color: 'black', fontSize: 20, fontFamily: 'serif' }}>Profile</Text>
                 </TouchableOpacity>

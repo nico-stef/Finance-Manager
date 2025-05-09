@@ -17,3 +17,4 @@ export {default as CreateOption} from './CreateOption';
 export {default as SeeOption} from './SeeOption';
 export {default as SeeAccounts} from './SeeAccounts';
 export {default as CreateAccount} from './CreateAccount';
+export {default as UploadTransactions} from './UploadTransactions';
