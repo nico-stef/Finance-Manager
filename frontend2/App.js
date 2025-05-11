@@ -11,6 +11,7 @@ function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator>
+        <Stack.Screen name="BudgetPage" component={BudgetPage} options={{ headerShown: false }}/>
       <Stack.Screen name="UploadTransactions" component={UploadTransactions} options={{ headerShown: false }}/>
       <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="Add expense" component={AddExpense} options={{ headerShown: false }}/>
@@ -26,7 +27,7 @@ function App() {
       <Stack.Screen name="CreateAccount" component={CreateAccount} options={{ headerShown: false }}/>
       
       <Stack.Screen name="CreateObjective" component={CreateObjective} options={{ headerShown: false }}/>
-      <Stack.Screen name="BudgetPage" component={BudgetPage} options={{ headerShown: false }}/>
+      
       <Stack.Screen name="LogIn" component={LogInScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="SignIn" component={SignInScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="FinancialRecords" component={FinancialRecords} options={{ headerShown: false }}/>

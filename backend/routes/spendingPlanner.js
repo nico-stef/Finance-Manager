@@ -63,7 +63,7 @@ const storage = multer.diskStorage({
   })
   const upload = multer({ storage })
 
-router.post('/addOption', authenticateToken, upload.single('photo'), async (req, res) => {
+router.post('/addOption', upload.single('photo'), async (req, res) => {
 
     const imagePath = req?.file?.path;
     const { name, price, note, objectiveId } = req.body;

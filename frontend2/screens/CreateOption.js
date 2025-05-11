@@ -97,6 +97,8 @@ export default function CreateOption({ route }) {
     data.append('price', amount);
     data.append('note', note);
     data.append('objectiveId', objectiveId);
+
+    console.log(nameObjective, amount, note, objectiveId)
     const response = await fetch(`${API_URL}/planner/addOption`, {
       method: 'POST',
       body: data,

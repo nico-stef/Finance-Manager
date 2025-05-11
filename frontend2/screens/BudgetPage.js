@@ -1,7 +1,7 @@
 import React from 'react'
 import { useState, useEffect, useRef } from "react";
 import { useNavigation } from '@react-navigation/native';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, FlatList, Modal, Pressable, TextInput, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, FlatList, Modal, Pressable, TextInput } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -25,6 +25,7 @@ export default function BudgetPage() {
     const [budgetSpent, setBudgetSpent] = useState(0);
     const [modalMonthCalendar, setModalMonthCalendar] = useState(false); //moddal calendar month
     const [month, setMonth] = useState(''); //selected month
+    const [modalBudgetVisible, setModalBudgetVisible] = useState(false);
 
     const toggleMenu = () => {
         setIsOpen(!isOpen);
@@ -59,12 +60,12 @@ export default function BudgetPage() {
         const currentYear = month ? month.year : date.getFullYear();
 
         getBudgetsAll(userid, currentMonth, currentYear)
-            .then((data) => { 
-                if(data === 'error'){
+            .then((data) => {
+                if (data === 'error') {
                     navigation.navigate('LogIn');
                     return;
                 }
-                setBudgets(data) 
+                setBudgets(data)
             })
             .catch((err) => console.error(err));
     }, [userid, month]);
@@ -93,7 +94,7 @@ export default function BudgetPage() {
 
     const Record = ({ item }) => {
         return (
-            <View style={styles.cardRecordBig}>
+            <TouchableOpacity style={styles.cardRecordBig} onPress={() => setModalBudgetVisible(true)}>
                 <View style={styles.cardRecord}>
 
                     <View style={{ flexDirection: 'row', alignItems: 'center', width: '50%' }}>
@@ -102,8 +103,8 @@ export default function BudgetPage() {
                     <Text style={[styles.buttonTextRecord]}>{item.total ? (item.total.endsWith('.00') ? parseFloat(item.total).toFixed(0) : item.total) : `0`}/{item.amount.endsWith('.00') ? parseFloat(item.amount).toFixed(0) : item.amount}</Text>
 
                 </View>
-                <Progress.Bar progress={parseFloat(item.total)/parseFloat(item.amount)} width={null} style={{ width: '90%', alignSelf: 'center' }} color='#69C0FF' />
-            </View>
+                <Progress.Bar progress={parseFloat(item.total) / parseFloat(item.amount)} width={null} style={{ width: '90%', alignSelf: 'center' }} color='#69C0FF' />
+            </TouchableOpacity>
 
         )
     };
@@ -149,6 +150,37 @@ export default function BudgetPage() {
                         contentContainerStyle={{ paddingBottom: 80 }}
                     />}
 
+
+                    {/* --------modal pentru record------------- */}
+                    <Modal
+                        animationType="slide"
+                        transparent={true}
+                        visible={modalBudgetVisible}
+                        onRequestClose={() => {
+                            modalBudgetVisible(!modalBudgetVisible);
+                        }}>
+                        <View style={styles.centeredView}>
+                            <View style={styles.modal}>
+                                
+                                <View style={styles.buttons}>
+                                    <TouchableOpacity style={[styles.button, styles.update]}>
+                                        <Text style={styles.buttonText}>Update</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity style={[styles.button, styles.delete]}>
+                                        <Text style={styles.buttonText}>Delete</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                <Pressable
+                                    style={[styles.buttonClose]}
+                                    onPress={() => setModalBudgetVisible(!modalBudgetVisible)}>
+                                    <Text style={styles.textStyle}>close</Text>
+                                </Pressable>
+                            </View>
+                        </View>
+                    </Modal>
+
                 </View>
 
 
@@ -162,6 +194,46 @@ export default function BudgetPage() {
 }
 
 const styles = StyleSheet.create({
+    centeredView: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modal: {
+        width: '85%',
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 35,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    buttons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 20,
+        marginBottom: 20
+    },
+    update: {
+        backgroundColor: '#4CAF50',
+    },
+    delete: {
+        backgroundColor: '#f44336',
+    },
+    button: {
+        borderRadius: 20,
+        padding: 10,
+        elevation: 2,
+    },
+    buttonClose: {
+        alignItems: 'center',
+    },
     budgetCard: {
         height: '20%',
         width: '95%',
@@ -174,7 +246,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         padding: 10,
         elevation: 5,
-        backgroundColor: 'white', 
+        backgroundColor: 'white',
     },
     viewPreviousBudgets: {
         flexDirection: 'row',

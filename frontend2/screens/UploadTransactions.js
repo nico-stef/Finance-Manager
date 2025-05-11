@@ -27,12 +27,12 @@ function UploadTransactions() {
     const uploadDocument = async () => {
         const fileToUpload = new FormData();
 
-        if(!account){
+        if (!account) {
             Alert.alert("", "Select an account!");
             return;
         }
 
-        if(!selectedDocument){
+        if (!selectedDocument) {
             Alert.alert("", "Select a document!");
             return;
         }
@@ -45,7 +45,15 @@ function UploadTransactions() {
         fileToUpload.append('account_id', account.idaccounts);
 
         try {
-            const response = await fetch(`${API_URL}/tranzactiiExtras`, {
+            let endpoint = '';
+            
+            if (selectedDocument.mimeType === 'text/comma-separated-values') {
+                endpoint = 'tranzactiiExtrasCSV';
+            } else if (selectedDocument.mimeType === 'application/pdf') {
+                console.log("fisier tip: : ", selectedDocument.mimeType)
+                endpoint = 'extrasPDF_Raiffeisen';
+            }
+            const response = await fetch(`${API_URL}/${endpoint}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -56,11 +64,11 @@ function UploadTransactions() {
             if (response.ok) {
                 console.log("Upload successful",);
                 Alert.alert("Success", "Data uploaded successfully from bank statement!");
-              } else {
+            } else {
                 const errorData = await response.json();
                 console.log("Upload failed:", errorData);
                 Alert.alert("Failed", "File could not be processed. Try another one!");
-              }
+            }
         } catch (error) {
             console.log("Upload failed:", error);
         }
@@ -75,10 +83,8 @@ function UploadTransactions() {
 
             if (!result.canceled) {
                 const successResult = result.assets[0];
-                console.log("fisier nume : ", successResult, successResult.name)
 
                 setSelectedDocument(successResult);
-                // await uploadDocument(successResult);
 
             } else {
                 console.log("Document selection cancelled.");
@@ -126,9 +132,9 @@ function UploadTransactions() {
         }
     }, [modalAccount]);
 
-    useEffect(() => {
-        console.log("conturi: ", accounts)
-    }, [accounts]);
+    // useEffect(() => {
+    //     console.log("conturi: ", accounts)
+    // }, [accounts]);
 
     const closeModal = (setModalVisibile) => {
         return () => { //functia fara return ar fi fost apelata imediat
@@ -177,7 +183,7 @@ function UploadTransactions() {
                             <Icon name="file-alt" size={30}></Icon>
                             {selectedDocument ? (
                                 <Text style={[styles.input, { borderWidth: 0, fontSize: 16 }]}>Selected: {selectedDocument.name}</Text>
-                            ) : (<Text style={{ fontSize: 16 }}>Select an xlsx file...</Text>)}
+                            ) : (<Text style={{ fontSize: 16 }}>Select a pdf file...</Text>)}
 
                         </View>
                     </TouchableOpacity>

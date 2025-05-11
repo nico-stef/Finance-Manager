@@ -68,7 +68,7 @@ function ExcelDateToISOString(serial) {
 function isValidDateFormat(value) {
   if (Number.isFinite(value)) {
     value = ExcelDateToISOString(value);
-    
+
   }
   console.log(value)
   const dateRegex = /^(?:\d{1,2}\/\d{1,2}\/\d{4}|\d{4}-\d{2}-\d{2})$/;
@@ -98,7 +98,7 @@ function formatDate(dateString) {
 }
 
 
-router.post('/tranzactiiExtras', upload.single('file'), async (req, res) => {
+router.post('/tranzactiiExtrasCSV', upload.single('file'), async (req, res) => {
   try {
     const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
@@ -129,7 +129,6 @@ router.post('/tranzactiiExtras', upload.single('file'), async (req, res) => {
         });
       }
     });
-    console.log(results)
 
     queryExpense = `INSERT INTO expenses (amount, date, account_id, category_id) VALUES(?, ?, ?, (SELECT idcategories FROM categories WHERE category = ? LIMIT 1));`
     queryIncome = `INSERT INTO incomes (amount, date, account_id) VALUES(?, ?, ?);`
@@ -138,13 +137,14 @@ router.post('/tranzactiiExtras', upload.single('file'), async (req, res) => {
         const amount = results[i].debit;
         const date = formatDate(results[i].dataTranzactie);
         const category = results[i].categorie;
-        await queryFunction(queryExpense, [amount, date, accountId, category]);
-      }else{
+        // await queryFunction(queryExpense, [amount, date, accountId, category]);
+      } else {
         const amount = results[i].credit;
         const date = formatDate(results[i].dataTranzactie);
-        await queryFunction(queryIncome, [amount, date, accountId]);
+        // await queryFunction(queryIncome, [amount, date, accountId]);
       }
 
+    console.log(results)
     console.log("lungime", results.length)
     res.sendStatus(200);
   } catch (error) {

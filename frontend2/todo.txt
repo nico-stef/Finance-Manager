@@ -4,12 +4,12 @@
 [v] cand dau add income sa dau warning daca nu a completat toate campurile
 [v] sa transfer la baza de date data in format normal, fara ora
 [v] sa modific baza de date cu delete cascade
-[] sa adaug selectarea bugetului la pagina expenses
+[v] sa adaug selectarea bugetului la pagina expenses
 [v] crearea de accounts
 [v] cand sterg income, sa sterg si din totalul din account pe backend
 [] sa fac update la SeeOption
 [v] cand sterg account sa se stearga cascade toate expenses
 [v] sa fac mesajele pt update expense < 0
-[] sa modific toate api-urile pt refreshtoken
-[] sa vad la choose category expsne, nu apar?
+[v] sa modific toate api-urile pt refreshtoken
+[v] sa vad la choose category expsne, nu apar?
 [] la import transactions sa extrag/adaug in conturi suma

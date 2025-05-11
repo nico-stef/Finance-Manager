@@ -13,6 +13,7 @@ import { Dropdown } from 'react-native-element-dropdown';
 import Menu from '../components.js/Menu';
 import SideMenuAnimated from '../components.js/SideMenuAnimated';
 import Header from '../components.js/Header';
+import { MyModal } from '../components.js/myModal';
 
 export default function AddExpense() {
     const [amount, setAmount] = useState('');
@@ -38,6 +39,7 @@ export default function AddExpense() {
     const [isLoggedIn, setIsLoggedIn] = useState(true);
     const navigation = useNavigation();
     const [isOpen, setIsOpen] = useState(true);
+    const [modalCategory, setModalCategory] = useState(false);
 
     const toggleMenu = () => {
         setIsOpen(!isOpen);
@@ -76,7 +78,7 @@ export default function AddExpense() {
 
             if (username && token) {
                 const user = await getUserData(username, token);
-                if(user === 'error'){
+                if (user === 'error') {
                     navigation.navigate('LogIn');
                     return;
                 }
@@ -88,31 +90,53 @@ export default function AddExpense() {
 
     }, [token, isLoggedIn])
 
+    // useEffect(() => {
+    //     const fetchCategories = async () => {
+    //         try {
+    //             const data = await getCategories();
+    //             if (result === 'error') {
+    //                 navigation.navigate('LogIn');
+    //                 return;
+    //             }
+
+    //             setCategories(data);
+    //         } catch (err) {
+    //             setError("There was an error fetching categories.");
+    //             console.error(err);
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
+    //     if (modalVisible1) {
+    //         fetchCategories();
+    //     }
+    // }, [modalVisible1]);
+
     useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const data = await getCategories();
-                if(result === 'error'){
-                    navigation.navigate('LogIn');
-                    return;
-                }
-                setCategories(data);
-            } catch (err) {
-                setError("There was an error fetching categories.");
-                console.error(err);
-            } finally {
-                setLoading(false);
+        const getCategoriesAsync = async () => {
+
+            const data = await getCategories();
+            if (data === 'error') {
+                navigation.navigate('LogIn');
+                return;
             }
+            const newArray = data.map(item => ({
+                name: item.category, //category va avea name ca sa putem itera prin el cu componenta MyModal
+                icon: item.icon,
+                idcategories: item.idcategories
+            }));
+            setCategories(newArray);
+
         };
-        if (modalVisible1) {
-            fetchCategories();
+        if (modalCategory) {
+            getCategoriesAsync();
         }
-    }, [modalVisible1]);
+    }, [modalCategory]);
 
     useEffect(() => {
         const getBudgetsAsync = async () => {
             const response = await getBudgets(user.id);
-            if(response === 'error'){
+            if (response === 'error') {
                 navigation.navigate('LogIn');
                 return;
             }
@@ -129,7 +153,7 @@ export default function AddExpense() {
         const fetchAccounts = async () => {
             try {
                 const data = await getAccounts(user.id);
-                if(data === 'error'){
+                if (data === 'error') {
                     navigation.navigate('LogIn');
                     return;
                 }
@@ -141,28 +165,15 @@ export default function AddExpense() {
                 setLoading(false);
             }
         };
-        const fetchTags = async () => {
-            try {
-                const data = await getTags(user.id);
-                setTags(data);
-            } catch (err) {
-                setError("There was an error fetching tags.");
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        }
 
         if (modalVisible2) {
             fetchAccounts();
-        }
-        if (modalVisible3) {
-            fetchTags();
         }
     }, [modalVisible2, user, modalVisible3, tags]);
 
     const handleCategory = (category) => {
         setCategory(category);
+        setModalCategory(false);
     }
 
     const handleAccount = (account) => {
@@ -177,49 +188,18 @@ export default function AddExpense() {
         setDatePicker(false);
     }
 
-    const handleSelectedTags = (tag) => {
-        setSelectedTags(prevTags => {
-            if (prevTags.find(t => t.idtags === tag.idtags)) { //daca tag era deja selectat il deselectam
-                return prevTags.filter(t => t.idtags !== tag.idtags);
-            }
-            return [...prevTags, tag]; //daca nu era selectat il adaugam in array
-        });
-    };
-
-    const handleAddTag = async (userId, tag) => {
-        try {
-            if (!tag)
-                Alert.alert('Warning', "You haven't typed any tag");
-            await addTag(userId, tag);
-            setAddedTag('');
-            await getTags(userId);
-        } catch (err) {
-            console.log(err);
-        }
-    }
-
-    const handleDeleteTags = async () => {
-        const ids = selectedTags.map(item => item.idtags);
-
-        await deleteTags(user.id, ids);
-        await getTags(user.id);
-
-        const taguri = selectedTags.filter(item => !ids.includes(item.idtags)); //daca stergem tagurile din baza de dare, sa nu mai apara nici la selected tags
-        setSelectedTags(taguri)
-    }
-
     const handleAddExpense = async () => {
         const tagIds = selectedTags.map(item => item.idtags);
         if (!amount || !category || !account)
             Alert.alert("Warning", "You need to complete the necessary fields!");
         else {
-            const response = await addExpense(user.id, tagIds, amount, date, category.idcategories, account.idaccounts, note, budget.idBudget);  
-            if(response === 'error'){
+            const response = await addExpense(user.id, tagIds, amount, date, category.idcategories, account.idaccounts, note, budget.idBudget);
+            if (response === 'error') {
                 navigation.navigate('LogIn');
                 return;
-            } 
+            }
             if (response.status === 200) {
-                
+
                 Alert.alert("Success", "Expense added successfully!");
                 setAmount('');
                 setAccount('');
@@ -230,12 +210,11 @@ export default function AddExpense() {
         }
     }
 
-    const frequencyOptions = [
-        { label: 'daily', value: '1' },
-        { label: 'weekly', value: '2' },
-        { label: 'monthly', value: '3' },
-        { label: 'yearly', value: '4' },
-    ];
+    const closeModal = (setModalVisibile) => {
+        return () => { //functia fara return ar fi fost apelata imediat
+            setModalVisibile(false);
+        };
+    };
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
@@ -282,11 +261,11 @@ export default function AddExpense() {
                             {/* ---------------pick the category------------- */}
                             <View style={styles.row}>
                                 <Text style={styles.label}>Category: </Text>
-                                <TextInput style={[styles.input, { borderWidth: 0, fontSize: 16 }]} value={category.category} editable={false} />
+                                <TextInput style={[styles.input, { borderWidth: 0, fontSize: 16 }]} value={category.name} editable={false} />
                             </View>
                             <Pressable
                                 style={[styles.button, styles.buttonOpen]}
-                                onPress={() => setModalVisible1(true)}>
+                                onPress={() => setModalCategory(true)}>
                                 <Text style={styles.textStyle}>choose category</Text>
                             </Pressable>
 
@@ -334,48 +313,11 @@ export default function AddExpense() {
                             <Text style={styles.label}>Note: </Text>
                             <TextInput style={[styles.input, { backgroundColor: 'white' }]} onChangeText={setNote} value={note} placeholder="write a note" />
 
-                            {/* ----------modal category------------------- */}
-                            <Modal
-                                animationType="slide"
-                                transparent={true}
-                                visible={modalVisible1}
-                                onRequestClose={() => setModalVisible1(false)}
-                            >
-                                <View style={styles.centeredView}>
-                                    <View style={styles.modalView}>
-                                        <Text style={styles.modalTitle}>Select a Category</Text>
-
-                                        {loading ? (
-                                            <Text>Loading...</Text>
-                                        ) : (
-                                            <FlatList
-                                                data={categories}
-                                                keyExtractor={(item) => item.idcategories}
-                                                numColumns={2}
-                                                renderItem={({ item }) => (
-                                                    <Pressable style={[
-                                                        styles.categoryItem,
-                                                        category && category.idcategories === item.idcategories
-                                                            ? styles.selectedCategory
-                                                            : null,
-                                                    ]}
-                                                        onPress={() => handleCategory(item)} >
-                                                        <Icon name={item.icon} size={20} color="black" style={styles.icon} />
-                                                        <Text style={styles.categoryText}>{item.category}</Text>
-                                                    </Pressable>
-                                                )}
-                                            />
-                                        )}
-
-                                        <Pressable
-                                            style={[styles.button, styles.buttonClose]}
-                                            onPress={() => setModalVisible1(false)}
-                                        >
-                                            <Text style={styles.textStyle}>Close</Text>
-                                        </Pressable>
-                                    </View>
-                                </View>
-                            </Modal>
+                            {/* ------------modal pentru category------------- */}
+                            <MyModal
+                                visible={modalCategory} onClose={closeModal(setModalCategory)} title="Select the month"
+                                data={categories} keyExtractor={(item) => item.idcategories} onItemPress={handleCategory} nrCol={3} desc={true}
+                            />
 
 
                             {/* ----------------modal account-------------- */}
@@ -413,68 +355,6 @@ export default function AddExpense() {
                                         <Pressable
                                             style={[styles.button, styles.buttonClose]}
                                             onPress={() => setModalVisible2(false)}
-                                        >
-                                            <Text style={styles.textStyle}>Close</Text>
-                                        </Pressable>
-                                    </View>
-                                </View>
-                            </Modal>
-
-                            {/* ---------------modal tags-------------------- */}
-                            <Modal
-                                animationType="slide"
-                                transparent={true}
-                                visible={modalVisible3}
-                                onRequestClose={() => setModalVisible3(false)}
-                            >
-                                <View style={styles.centeredView}>
-                                    <View style={styles.modalView}>
-                                        <Text style={styles.modalTitle}>Select tags</Text>
-                                        <Text style={{ textAlign: "center", fontSize: 16 }}>Select or unselect tags by tapping on them! </Text>
-
-                                        {loading ? (
-                                            <Text>Loading...</Text>
-                                        ) : (
-                                            <FlatList
-                                                data={[...tags, { idtags: 'add', name: '' }]}
-                                                keyExtractor={(item) => item.idtags}
-                                                numColumns={2}
-                                                renderItem={({ item }) => (
-                                                    item.idtags !== 'add' ? (
-                                                        <Pressable style={[
-                                                            styles.categoryItem,
-                                                            selectedTags.some(t => t.idtags === item.idtags)
-                                                                ? styles.selectedCategory
-                                                                : null,
-                                                        ]}
-                                                            onPress={() => handleSelectedTags(item)} >
-                                                            <Text style={styles.categoryText}>{item.name}</Text>
-                                                        </Pressable>
-                                                    ) : (
-                                                        <Pressable style={styles.categoryItem} >
-                                                            <TextInput onChangeText={setAddedTag} value={addedTag} placeholder='add a tag..'></TextInput>
-                                                        </Pressable>
-                                                    )
-                                                )}
-                                            />
-                                        )}
-
-                                        <View style={styles.incomeButtonsView}>
-                                            <Pressable
-                                                style={[styles.buttonIncome, { backgroundColor: '#4CAF50' }]}
-                                                onPress={() => handleAddTag(user.id, addedTag)}>
-                                                <Text style={styles.textStyle}>create new tag</Text>
-                                            </Pressable>
-                                            <Pressable
-                                                style={[styles.buttonIncome, { backgroundColor: '#E74C3C' }]}
-                                                onPress={() => handleDeleteTags()}>
-                                                <Text style={styles.textStyle}>delete selected tags</Text>
-                                            </Pressable>
-                                        </View>
-
-                                        <Pressable
-                                            style={[styles.button, styles.buttonClose]}
-                                            onPress={() => setModalVisible3(false)}
                                         >
                                             <Text style={styles.textStyle}>Close</Text>
                                         </Pressable>

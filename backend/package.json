@@ -9,6 +9,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@babylonjs/core": "^8.7.0",
     "axios": "^1.7.9",
     "bcryptjs": "^2.4.3",
     "csv-parser": "^3.2.0",
@@ -21,6 +22,9 @@
     "nodemon": "^3.1.9",
     "passport": "^0.7.0",
     "passport-google-oauth2": "^0.2.0",
+    "pdf-parse": "^1.1.1",
+    "pdf2json": "^3.1.5",
+    "pdfjs-dist": "^5.2.133",
     "xlsx": "^0.18.5"
   }
 }

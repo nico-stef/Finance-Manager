@@ -5,6 +5,7 @@ import { api } from './api.js';
 export const getCategories = async () => {
     try {
         const response = await api.get(`${API_URL}/getCategories`);
+        // console.log(response.data)
         return response.data;
     } catch (error) {
         console.log('Eroare la cererea GET categories:', error);
@@ -25,7 +26,7 @@ export const getAccounts = async (userId) => {
 import { Alert } from 'react-native';
 export const addExpense = async (userId, tags, amount, date, categoryId, AccountId, note, budget_id) => {
     try {
-        const response = await axios.post(`${API_URL}/addExpense`,
+        const response = await api.post(`${API_URL}/addExpense`,
             {
                 id_user: userId,
                 amount,
@@ -36,6 +37,7 @@ export const addExpense = async (userId, tags, amount, date, categoryId, Account
                 tags,
                 budget_id
             });
+        console.log(response)
         return response;
     } catch (error) {
         if (error.response?.status === 400) {
