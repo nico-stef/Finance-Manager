@@ -1,7 +1,7 @@
 import React from 'react'
 import { useState, useEffect, useRef } from "react";
 import { useNavigation } from '@react-navigation/native';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, FlatList, Modal, Pressable, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, FlatList, Modal, Pressable, TextInput, Alert } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -9,7 +9,7 @@ import Menu from '../components.js/Menu';
 import SideMenuAnimated from '../components.js/SideMenuAnimated';
 import Header from '../components.js/Header';
 import * as Progress from 'react-native-progress';
-import { getBudgetsAll } from '../APIs/moneyManagement';
+import { getBudgetsAll, stopBudget, deleteBudget, updateBudget } from '../APIs/moneyManagement';
 import { MyModal } from '../components.js/myModal';
 import { months } from "../variables"
 
@@ -25,6 +25,7 @@ export default function BudgetPage() {
     const [budgetSpent, setBudgetSpent] = useState(0);
     const [modalMonthCalendar, setModalMonthCalendar] = useState(false); //moddal calendar month
     const [month, setMonth] = useState(''); //selected month
+    const [budget, setBudget] = useState(''); //selected budget
     const [modalBudgetVisible, setModalBudgetVisible] = useState(false);
 
     const toggleMenu = () => {
@@ -92,16 +93,62 @@ export default function BudgetPage() {
         setModalMonthCalendar(false);
     }
 
+    const handleStopBudget = async () => {
+        const response = await stopBudget(budget.idbudgets);
+        if (response.status === 200) {
+            Alert.alert("", "budget stopped succesfully");
+        }
+        setModalBudgetVisible(false);
+        const newBudgets = budgets.map(b => b.idbudgets === budget.idbudgets ? { ...b, frequency: "1" } : b);
+        setBudgets(newBudgets);
+    }
+
+    const handleDeleteBudget = async () => {
+        const response = await deleteBudget(budget.idbudgets);
+        if (response === 'error') {
+            navigation.navigate('LogIn');
+            return;
+        }
+        Alert.alert("", "Budget deleted successfully!");
+        navigation.replace('BudgetPage');
+    }
+
+    const handleDeleteBudgetConfirmation = () =>
+        Alert.alert('Are you sure you want to delete?', 'If you delete this budget, all expenses associated will be deleted too.', [
+            {
+                text: 'Cancel',
+                onPress: () => console.log('Cancel Pressed'),
+                style: 'cancel',
+            },
+            { text: 'Delete', onPress: handleDeleteBudget },
+        ]);
+
+    const handleUpdateBudget = async () => {
+        const response = await updateBudget(budget.name, budget.amount, budget.idbudgets);
+        if (response === 'error') {
+            navigation.navigate('LogIn');
+            return;
+        }
+        Alert.alert("", "Budget updated successfully!");
+        navigation.replace('BudgetPage');
+    }
+
+    // useEffect(() => {
+    //     console.log("bugetele: ", budget)
+    // }, [budget]);
+
     const Record = ({ item }) => {
         return (
-            <TouchableOpacity style={styles.cardRecordBig} onPress={() => setModalBudgetVisible(true)}>
+            <TouchableOpacity style={styles.cardRecordBig} onPress={() => { setBudget(item); setModalBudgetVisible(true) }}>
                 <View style={styles.cardRecord}>
 
                     <View style={{ flexDirection: 'row', alignItems: 'center', width: '50%' }}>
                         <Text style={[styles.buttonTextRecord, { fontWeight: 'bold', marginLeft: 20 }]}>{item.name}</Text>
                     </View>
-                    <Text style={[styles.buttonTextRecord]}>{item.total ? (item.total.endsWith('.00') ? parseFloat(item.total).toFixed(0) : item.total) : `0`}/{item.amount.endsWith('.00') ? parseFloat(item.amount).toFixed(0) : item.amount}</Text>
-
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={[styles.buttonTextRecord]}>{item.total ? (item.total.endsWith('.00') ? parseFloat(item.total).toFixed(0) : item.total) : `0`}/{item.amount.endsWith('.00') ? parseFloat(item.amount).toFixed(0) : item.amount}</Text>
+                        <Icon name="edit" size={10} color="black" paddingHorizontal={5} />
+                    </View>
                 </View>
                 <Progress.Bar progress={parseFloat(item.total) / parseFloat(item.amount)} width={null} style={{ width: '90%', alignSelf: 'center' }} color='#69C0FF' />
             </TouchableOpacity>
@@ -124,10 +171,10 @@ export default function BudgetPage() {
                     />
 
                     <View style={styles.budgetCard}>
-                        <Text style={[styles.buttonText, { fontSize: 18, marginLeft: 6, marginTop: 10 }]}>Available budget for {month ? month.name : date.toLocaleString('en-US', { month: 'long' })} {/*{date.toLocaleString('en-US', { month: 'long' })}*/}: </Text>
+                        <Text style={[styles.buttonText, { fontSize: 18, marginLeft: 6, marginTop: 10 }]}>Spent budget in {month ? month.name : date.toLocaleString('en-US', { month: 'long' })} {/*{date.toLocaleString('en-US', { month: 'long' })}*/}: </Text>
 
                         <View style={{ alignItems: 'center' }}>
-                            <Text style={[styles.buttonText, { fontSize: 20 }]}>${budgetThisMonth - budgetSpent} out of ${budgetThisMonth} </Text>
+                            <Text style={[styles.buttonText, { fontSize: 20 }]}>${budgetSpent} out of ${budgetThisMonth} </Text>
                         </View>
 
                         <Progress.Bar progress={progress} width={null} />
@@ -151,7 +198,7 @@ export default function BudgetPage() {
                     />}
 
 
-                    {/* --------modal pentru record------------- */}
+                    {/* --------modal pentru buget------------- */}
                     <Modal
                         animationType="slide"
                         transparent={true}
@@ -161,15 +208,64 @@ export default function BudgetPage() {
                         }}>
                         <View style={styles.centeredView}>
                             <View style={styles.modal}>
-                                
+                                <Text style={styles.modalTitle}>Selected Budget</Text>
+
+                                <View style={styles.rowModal}>
+                                    <Text style={styles.label}>Name:</Text>
+                                    <TextInput
+                                        editable
+                                        multiline={true}
+                                        numberOfLines={5}
+                                        scrollEnabled={true}
+                                        value={budget?.name}
+                                        onChangeText={(text) =>
+                                            setBudget(prev => ({
+                                                ...prev,
+                                                name: text
+                                            }))
+                                        }
+                                        style={styles.textInput}
+                                    />
+                                    <Icon name="edit" size={16} color="black" paddingHorizontal={10} />
+                                </View>
+
+                                <View style={styles.rowModal}>
+                                    <Text style={styles.label}>Amount allocated:</Text>
+                                    <TouchableOpacity>
+                                        <TextInput
+                                            editable
+                                            keyboardType="decimal-pad"
+                                            value={budget.amount}
+                                            onChangeText={(text) =>
+                                                setBudget(prev => ({
+                                                    ...prev,
+                                                    amount: text
+                                                }))
+                                            }
+                                            style={styles.textInput}
+                                        />
+                                    </TouchableOpacity>
+                                    <Icon name="edit" size={16} color="black" paddingHorizontal={10} />
+                                </View>
+
+                                <View style={styles.rowModal}>
+                                    <Text style={styles.label}>Frequency: </Text>
+                                    <Text>{budget.frequency === '1' ? `this month only` : `recurrent`}</Text>
+                                </View>
+
+
                                 <View style={styles.buttons}>
-                                    <TouchableOpacity style={[styles.button, styles.update]}>
+                                    <TouchableOpacity onPress={handleUpdateBudget} style={[styles.button, styles.update]}>
                                         <Text style={styles.buttonText}>Update</Text>
                                     </TouchableOpacity>
 
-                                    <TouchableOpacity style={[styles.button, styles.delete]}>
+                                    <TouchableOpacity onPress={handleDeleteBudgetConfirmation} style={[styles.button, styles.delete]}>
                                         <Text style={styles.buttonText}>Delete</Text>
                                     </TouchableOpacity>
+
+                                    {!budget.end_date && budget.frequency === "2" && <TouchableOpacity onPress={handleStopBudget} style={[styles.button, styles.delete, { backgroundColor: '#b22222' }]}>
+                                        <Text style={styles.buttonText}>Stop</Text>
+                                    </TouchableOpacity>}
                                 </View>
 
                                 <Pressable
@@ -194,11 +290,30 @@ export default function BudgetPage() {
 }
 
 const styles = StyleSheet.create({
+    textInput: {
+        flex: 1,
+        minHeight: 60,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: '600',
+        marginBottom: 15,
+        textAlign: 'center',
+    },
+    rowModal: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '80%',
+    },
     centeredView: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.4)',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    label: {
+        fontWeight: 'bold',
+        fontSize: 16,
     },
     modal: {
         width: '85%',

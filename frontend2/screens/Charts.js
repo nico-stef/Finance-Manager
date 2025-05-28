@@ -385,7 +385,7 @@ export default function Charts() {
                     
                         <View style={{ maxHeight: 200 }}>
                             {totalSpent > 0 &&
-                                <Text style={{ fontWeight: 'bold', fontSize: 16, flexDirection: 'row', textAlign: "center", paddingBottom: 10 }}>Total spent: {totalSpent}$</Text>
+                                <Text style={{ fontWeight: 'bold', fontSize: 16, flexDirection: 'row', textAlign: "center", paddingBottom: 10 }}>Total spent: {totalSpent.toFixed(2)}$</Text>
                             }
 
                             <FlatList
@@ -398,6 +398,7 @@ export default function Charts() {
                                         <Text style={styles.boxInfoText}>{item.percent}%</Text>
                                     </View>
                                 )}
+                                contentContainerStyle={{ padding: 20 }}
                             />
 
                         </View>

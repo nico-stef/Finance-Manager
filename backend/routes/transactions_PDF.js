@@ -1,7 +1,5 @@
 const express = require('express');
 const multer = require('multer');
-const fs = require('fs');
-const pdfParse = require('pdf-parse');
 const path = require('path');
 
 const app = express();
@@ -16,12 +14,22 @@ const upload = multer({ dest: 'uploads/' });
 const usefulFunctions = require("../queryFunction");
 const queryFunction = usefulFunctions.queryAsync;
 
+//pentru tranzactii
+const mysql = require('mysql2/promise');
+require('dotenv').config();
+const config = {
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE
+};
+
 
 const categorii = [
     {
         nume: 'food',
         cuvinteCheie: [
-            'lidl', 'profi', 'auchan', 'carrefour', 'kaufland', 'mega image', 'penny', 'selgros', 'supeco', 'spar', 'minna'
+            'lidl', 'profi', 'auchan', 'carrefour', 'kaufland', 'mega image', 'penny', 'selgros', 'supeco', 'spar', 'minna', 'food'
         ]
     },
     {
@@ -77,11 +85,22 @@ function formatDate(dateString) {
     return `${year}-${month}-${day}`;
 }
 
+function formatDateBRD(dateString) {
+
+    const [day, month, year] = dateString.split('/');
+    return `${year}-${month}-${day}`;
+}
+
 const PDFParser = require('pdf2json');
 
 function esteNumarValid(amount) {
     return /^\d+(,\d{3})*(\.\d{2})$|^\d+(\.\d{2})$/.test(amount);
 }
+
+function esteNumarValidBRD(text) {
+    return /^\d{1,3}(\.\d{3})*,\d{2}$/.test(text);
+}
+
 
 function esteDataValida(data) {
     return /^\d{2}\.\d{2}\.\d{4}$|^\d{2}\/\d{2}\/\d{4}$/.test(data);
@@ -104,6 +123,8 @@ router.post('/extrasPDF_Raiffeisen', upload.single('file'), async (req, res) => 
     const accountId = req.body.account_id;
 
     const parser = new PDFParser();
+    let sumExpenses = 0;
+    let sumIncomes = 0;
 
     parser.on('pdfParser_dataReady', async (pdfData) => {
 
@@ -115,11 +136,14 @@ router.post('/extrasPDF_Raiffeisen', upload.single('file'), async (req, res) => 
         pages.forEach((page) => {
             page.Texts.forEach((textElement) => {
                 const x = textElement.x;
+                const y = textElement.y;
                 const text = decodeURIComponent(textElement.R[0].T);
+
+                console.log(x, " ", y, text)
 
                 const COLUMN_RANGES = {
                     dataTranzactieRange: [0, 4],
-                    debitRange: [25, 28],
+                    debitRange: [25, 29.5],
                     creditRange: [30, 34]
                 };
 
@@ -172,22 +196,52 @@ router.post('/extrasPDF_Raiffeisen', upload.single('file'), async (req, res) => 
 
         transactions.forEach(record => record.category = determinaCategoria(record.details)); //adaugam si categorie la inregistrari
 
-        queryExpense = `INSERT INTO expenses (amount, date, account_id, category_id) VALUES(?, ?, ?, (SELECT idcategories FROM categories WHERE category = ? LIMIT 1));`
-        queryIncome = `INSERT INTO incomes (amount, date, account_id) VALUES(?, ?, ?);`
-        for (i = 0; i < transactions.length; i++)
-            if (transactions[i].type === 'debit') {
-                const amount = transactions[i].amount;
-                const date = transactions[i].dataTranzactie;
-                const category = transactions[i].category;
-                await queryFunction(queryExpense, [amount, date, accountId, category]);
-            } else {
-                const amount = transactions[i].amount;
-                const date = transactions[i].dataTranzactie;
-                await queryFunction(queryIncome, [amount, date, accountId]);
+        //tranzactie pt ca daca suma din accounts nu este suficienta, eliminam inregistrarile din expenses/incomes
+        const connection = await mysql.createConnection(config);
+        try {
+            await connection.beginTransaction();
+
+            const queryExpense = `INSERT INTO expenses (amount, date, account_id, category_id)
+                                  VALUES(?, ?, ?, (SELECT idcategories FROM categories WHERE category = ? LIMIT 1));`;
+            const queryIncome = `INSERT INTO incomes (amount, date, account_id) VALUES(?, ?, ?);`;
+
+            let sumExpenses = 0;
+            let sumIncomes = 0;
+
+            for (let i = 0; i < transactions.length; i++) {
+                const { type, amount, dataTranzactie, category } = transactions[i];
+
+                if (type === 'debit') {
+                    sumExpenses += amount;
+                    await connection.execute(queryExpense, [amount, dataTranzactie, accountId, category]);
+                } else {
+                    sumIncomes += amount;
+                    await connection.execute(queryIncome, [amount, dataTranzactie, accountId]);
+                }
             }
 
-        console.log(transactions.length)
-        res.json({ transactions });
+            const [[result]] = await connection.query('SELECT total FROM accounts WHERE idaccounts = ?', [accountId]);
+            const currentTotal = parseFloat(result.total);
+
+            const newTotal = Math.round((currentTotal - sumExpenses + sumIncomes) * 100) / 100;
+
+            if (newTotal < 0) {
+                await connection.rollback();
+                await connection.end();
+                return res.status(400).json("Insufficient funds: this transaction would result in a negative account balance.");
+            }
+
+            await connection.query('UPDATE accounts SET total = ? WHERE idaccounts = ?', [newTotal, accountId]);
+            await connection.commit();
+            await connection.end();
+
+            return res.status(200).json("Transaction completed successfully.");
+        } catch (err) {
+            await connection.rollback();
+            await connection.end();
+            return res.status(500).json({ error: "Transaction failed", details: err.message });
+        }
+
     });
 
     parser.on("pdfParser_dataError", (errData) => {
@@ -198,67 +252,148 @@ router.post('/extrasPDF_Raiffeisen', upload.single('file'), async (req, res) => 
     parser.loadPDF(filePath);
 });
 
-
-
-router.post('/extrasPDF_BRD', upload.single('file'), (req, res) => {
+router.post('/extrasPDF_BRD', upload.single('file'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'Fișierul PDF lipsește' });
     }
 
     const filePath = req.file.path;
+    const accountId = req.body.account_id;
 
     const parser = new PDFParser();
+    let sumExpenses = 0;
+    let sumIncomes = 0;
 
-    parser.on('pdfParser_dataReady', (pdfData) => {
-        console.log('PDF Data Ready:', pdfData);
+    parser.on('pdfParser_dataReady', async (pdfData) => {
 
         const transactions = [];
         const pages = pdfData.Pages;
-        let transaction = {}
+        let currentTransaction = null;
+        let detailBuffer = '';
 
-        // Iterăm prin fiecare pagină
-        pages.forEach((page, pageIndex) => {
-            console.log(`Pagina ${pageIndex + 1}:`);
-            page.Texts.forEach((textElement, index) => {
+        let pendingAmount = null;
+        let pendingType = null;
+        let pendingDetails = '';
+
+        pages.forEach((page) => {
+            page.Texts.forEach((textElement) => {
                 const x = textElement.x;
+                const text = decodeURIComponent(textElement.R[0].T);
                 const y = textElement.y;
-                const rawText = decodeURIComponent(textElement.R[0].T);
-
-                console.log("rand nou: ", "X: ", x, "y: ", y, rawText)
 
                 const COLUMN_RANGES = {
-                    dataTranzactieRange: [0, 4],
-                    debitRange: [20, 26], // debitRange: [25, 28],
-                    creditRange: [27, 31]
+                    dataTranzactieRange: [0, 3],
+                    debitRange: [20, 27],
+                    creditRange: [28, 31],
+                    dataDecontareRange: [31, 40],
                 };
 
-                if (x >= COLUMN_RANGES.dataTranzactieRange[0] && x <= COLUMN_RANGES.dataTranzactieRange[1]) {
-                    if (esteDataValida(rawText))
-                        transaction.data = rawText;
+                if (x >= COLUMN_RANGES.creditRange[0] && x <= COLUMN_RANGES.creditRange[1]) {
+                    if (esteNumarValidBRD(text)) {
+                        pendingAmount = parseFloat(text.replace(/\./g, '').replace(',', '.'));
+                        pendingType = 'credit';
+                        pendingDetails = '';
+                    }
+                } else if (x >= COLUMN_RANGES.debitRange[0] && x <= COLUMN_RANGES.debitRange[1]) {
+                    if (esteNumarValidBRD(text)) {
+                        pendingAmount = parseFloat(text.replace(/\./g, '').replace(',', '.'));
+                        pendingType = 'debit';
+                        pendingDetails = '';
+                    }
+                } else if (x >= COLUMN_RANGES.dataTranzactieRange[0] && x <= COLUMN_RANGES.dataTranzactieRange[1]) {
+                    if (esteDataValida(text)) {
+                        if (pendingAmount && pendingType) {
+                            currentTransaction = {
+                                dataTranzactie: formatDateBRD(text),
+                                amount: pendingAmount,
+                                type: pendingType,
+                                details: pendingDetails.trim()
+                            };
+                            pendingAmount = null;
+                            pendingType = null;
+                            pendingDetails = '';
+                        }
+                    }
+                } else if (x >= COLUMN_RANGES.dataDecontareRange[0] && x <= COLUMN_RANGES.dataDecontareRange[1]) {
+                    if (esteDataValida(text) && currentTransaction) {
+                        currentTransaction.dataDecontare = formatDateBRD(text);
+                    }
+                } else {
+                    // Adăugăm în bufferul de detalii
+                    pendingDetails += text + ' ';
                 }
 
-                if (x >= COLUMN_RANGES.debitRange[0] && x <= COLUMN_RANGES.debitRange[1]) {
-                    // if (esteNumarValid(rawText)) {
-                    transaction.type = 'debit';
-                    transaction.amount = rawText;
-                    // }
-                } else if (x >= COLUMN_RANGES.creditRange[0] && x <= COLUMN_RANGES.creditRange[1]) {
-                    // if (esteNumarValid(rawText)) {
-                    transaction.type = 'credit';
-                    transaction.amount = rawText;
-                    // }
-                }
+                // Verificare finală dacă tranzacția e completă
+                if (currentTransaction &&
+                    currentTransaction.amount &&
+                    currentTransaction.type &&
+                    currentTransaction.dataTranzactie &&
+                    currentTransaction.dataDecontare
+                ) {
+                    const alreadyExists = transactions.some(t =>
+                        t.dataTranzactie === currentTransaction.dataTranzactie &&
+                        t.amount === currentTransaction.amount &&
+                        t.type === currentTransaction.type &&
+                        t.details === currentTransaction.details &&
+                        t.dataDecontare === currentTransaction.dataDecontare
+                    );
 
-                if (transaction.type && transaction.amount && transaction.data) {
-                    transactions.push({ ...transaction });
-                    transaction = {};
-                }
+                    if (!alreadyExists) {
+                        transactions.push(currentTransaction);
+                    }
 
+                    currentTransaction = null;
+                }
             });
         });
 
-        console.log(transactions.length)
-        res.json({ transactions });
+        transactions.forEach(record => record.category = determinaCategoria(record.details)); //adaugam si categorie la inregistrari
+
+        //tranzactie pt ca daca suma din accounts nu este suficienta, eliminam inregistrarile din expenses/incomes
+        const connection = await mysql.createConnection(config);
+        try {
+            await connection.beginTransaction();
+
+            const queryExpense = `INSERT INTO expenses (amount, date, account_id, category_id)
+                                  VALUES(?, ?, ?, (SELECT idcategories FROM categories WHERE category = ? LIMIT 1));`;
+            const queryIncome = `INSERT INTO incomes (amount, date, account_id) VALUES(?, ?, ?);`;
+
+            let sumExpenses = 0;
+            let sumIncomes = 0;
+
+            for (let i = 0; i < transactions.length; i++) {
+                const { type, amount, dataTranzactie, category } = transactions[i];
+
+                if (type === 'debit') {
+                    sumExpenses += amount;
+                    await connection.execute(queryExpense, [amount, dataTranzactie, accountId, category]);
+                } else {
+                    sumIncomes += amount;
+                    await connection.execute(queryIncome, [amount, dataTranzactie, accountId]);
+                }
+            }
+
+            const [[result]] = await connection.query('SELECT total FROM accounts WHERE idaccounts = ?', [accountId]);
+            const currentTotal = parseFloat(result.total);
+
+            const newTotal = parseFloat(currentTotal) - parseFloat(sumExpenses.toFixed(2)) + parseFloat(sumIncomes.toFixed(2));
+
+            if (newTotal < 0) {
+                await connection.rollback();
+                await connection.end();
+                return res.status(400).json("Insufficient funds: this transaction would result in a negative account balance.");
+            }
+
+            await connection.query('UPDATE accounts SET total = ? WHERE idaccounts = ?', [newTotal, accountId]);
+            await connection.commit();
+            await connection.end();
+
+            return res.status(200).json("Transaction completed successfully.");
+        } catch (err) {
+            await connection.rollback();
+            await connection.end();
+            return res.status(500).json({ error: "Transaction failed", details: err.message });
+        }
     });
 
     parser.on("pdfParser_dataError", (errData) => {
@@ -266,7 +401,7 @@ router.post('/extrasPDF_BRD', upload.single('file'), (req, res) => {
         res.status(500).json({ error: 'Eroare la procesarea fișierului PDF' });
     });
 
-    parser.loadPDF(filePath);  // Încarcă fișierul PDF
+    parser.loadPDF(filePath);
 });
 
 

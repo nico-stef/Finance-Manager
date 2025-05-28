@@ -22,6 +22,8 @@ export default function HomeScreen() {
     const [isVisibleBalance, setIsVisibleBalance] = useState(false);
     const [secretAmount, setSecretAmount] = useState('*****');
     const [totalBalance, setTotalBalance] = useState(0);
+    const [totalSpent, setTotalSpent] = useState(0);
+    const [latestRecords, setLatestRecords] = useState([]);
 
     const getAccessToken = async () => {
         try {
@@ -47,9 +49,9 @@ export default function HomeScreen() {
         }
     };
 
-    // useEffect(() => {
-    //     console.log("Rtokne ", refreshToken)
-    // }, [refreshToken]);
+    useEffect(() => {
+        console.log("Rtokne ", latestRecords)
+    }, [latestRecords]);
 
     //get accessToken/userid
     useEffect(() => {
@@ -63,10 +65,11 @@ export default function HomeScreen() {
     useEffect(() => {
         const getDetailsBalanceAsync = async () => {
             const res = await getDetailsBalance();
-            console.log(res)
-            if(res === 'error')
+            if (res === 'error')
                 navigation.navigate('LogIn')
-            setTotalBalance(res);
+            setTotalBalance(res.totalBalance);
+            setTotalSpent(res.totalSpent);
+            setLatestRecords(res.latestRecords);
         };
         if (token)
             getDetailsBalanceAsync();
@@ -92,21 +95,46 @@ export default function HomeScreen() {
                         </TouchableOpacity>
 
                     </View>
-
-                    {/* <View style={styles.summaryItem}>
-                        <Text style={styles.label}>Name:</Text>
-                        <Text style={styles.value}>{item ? item.name : "-"}</Text>
-                    </View> */}
                 </View>
 
                 <Text style={styles.title}>Amount spent this month:</Text>
                 <View style={styles.summaryRow}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', justifyContent: 'center' }}>
-                        <Text style={{ fontSize: 20 }}>  </Text>
+                        <Text style={{ fontSize: 20 }}> ${totalSpent ? totalSpent : 0} </Text>
 
                     </View>
                 </View>
             </LinearGradient>
+        )
+    };
+
+    const formatDate = (dateToFormat) => {
+        const date = new Date(dateToFormat);
+        date.setHours(12);
+        return date.toLocaleDateString("ro-en", {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        });
+    };
+
+    const Record = ({ item }) => {
+        return (
+            <TouchableOpacity style={styles.cardRecord}>
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', width: '80%' }}>
+                    {item.icon ? (<Icon name={item.icon} size={20} style={styles.icon} />) : (<Icon name="money-bill-wave" color="green" size={20} style={styles.icon} />)}
+                    <View style={{ marginLeft: 20 }}>
+                        <Text style={[styles.buttonText, { fontWeight: 'bold' }]}>{formatDate(item.date)}</Text>
+                        {item.category && <Text style={styles.buttonText}>{item.category}</Text>}
+                        {item.note && <Text style={[styles.buttonText, { fontSize: 14, width: '80%' }]}>{item.note}</Text>}
+                    </View>
+                </View>
+
+                {item.type === "expense" ? (<Text style={[styles.buttonText, { fontWeight: 'bold', color: "red" }]}>-${item.amount}</Text>) :
+                    (<Text style={[styles.buttonText, { fontWeight: 'bold', color: "green" }]}>+${item.amount}</Text>)}
+
+            </TouchableOpacity>
         )
     };
 
@@ -155,6 +183,25 @@ export default function HomeScreen() {
                         </View>
                     </View>
 
+
+                    <View style={{ marginTop: 15, flex: 1 }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', textAlign: 'center' }}>Latest Transactions</Text>
+                        {!latestRecords ?
+                            <View style={styles.container}>
+                                <Text style={styles.message}>
+                                    No transactions yet. Start logging your transactions and your latest ones will appear here!
+                                </Text>
+                            </View> :
+                            <FlatList
+                                data={latestRecords}
+                                extraData={latestRecords}
+                                renderItem={({ item }) => <Record item={item} />}
+                                keyExtractor={item => item.idexpenses ? item.idexpenses : item.idincomes}
+                                initialNumToRender={10}
+                                contentContainerStyle={{ paddingBottom: 80 }}
+                            />}
+                    </View>
+
                 </View>
 
             </View>
@@ -167,6 +214,37 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+    container: {
+        padding: 20,
+        marginTop: 50,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    message: {
+        fontSize: 16,
+        textAlign: 'center',
+        color: '#555',
+        lineHeight: 22,
+    },
+    cardRecord: {
+        backgroundColor: "#fff",
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: "space-between",
+        marginTop: 10,
+        paddingHorizontal: 15,
+        borderRadius: 10,
+        padding: 10,
+        elevation: 1,
+    },
+    icon: {
+        color: "black"
+    },
+    buttonText: {
+        color: 'black',
+        fontFamily: 'serif',
+        fontSize: 16
+    },
     buttonOptions: {
         padding: 25,
         borderRadius: 35,

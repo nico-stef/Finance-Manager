@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, SafeAreaView, StatusBar, Pressable } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, SafeAreaView, StatusBar, Pressable, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import Menu from '../components.js/Menu'
 import SideMenuAnimated from '../components.js/SideMenuAnimated';
@@ -19,6 +19,8 @@ function UploadTransactions() {
     const [modalAccount, setModalAccount] = useState(false); //account
     const [userId, setUserId] = useState(null);
     const [selectedDocument, setSelectedDocument] = useState('');
+    const [bankOption, setBankOption] = useState(false);
+    const [bankOptions, setBankOptions] = useState(false);
 
     const toggleMenu = () => {
         setIsOpen(!isOpen);
@@ -32,6 +34,11 @@ function UploadTransactions() {
             return;
         }
 
+        if (!bankOption) {
+            Alert.alert("", "Select a bank type!");
+            return;
+        }
+
         if (!selectedDocument) {
             Alert.alert("", "Select a document!");
             return;
@@ -39,20 +46,23 @@ function UploadTransactions() {
 
         fileToUpload.append('file', {
             uri: selectedDocument.uri,
-            name: selectedDocument.name,
+            name: "latestFile",
             type: selectedDocument.mimeType || 'application/octet-stream',
         });
         fileToUpload.append('account_id', account.idaccounts);
 
         try {
             let endpoint = '';
-            
+
             if (selectedDocument.mimeType === 'text/comma-separated-values') {
                 endpoint = 'tranzactiiExtrasCSV';
             } else if (selectedDocument.mimeType === 'application/pdf') {
-                console.log("fisier tip: : ", selectedDocument.mimeType)
-                endpoint = 'extrasPDF_Raiffeisen';
+                if (bankOption === "BRD")
+                    endpoint = 'extrasPDF_BRD';
+                else
+                    endpoint = 'extrasPDF_Raiffeisen';
             }
+
             const response = await fetch(`${API_URL}/${endpoint}`, {
                 method: 'POST',
                 headers: {
@@ -60,6 +70,7 @@ function UploadTransactions() {
                 },
                 body: fileToUpload
             });
+            // console.log(response)
 
             if (response.ok) {
                 console.log("Upload successful",);
@@ -67,7 +78,10 @@ function UploadTransactions() {
             } else {
                 const errorData = await response.json();
                 console.log("Upload failed:", errorData);
-                Alert.alert("Failed", "File could not be processed. Try another one!");
+                if (!errorData)
+                    Alert.alert("Failed", "File could not be processed. Try another one!");
+                else
+                    Alert.alert("Warning", errorData);
             }
         } catch (error) {
             console.log("Upload failed:", error);
@@ -132,9 +146,9 @@ function UploadTransactions() {
         }
     }, [modalAccount]);
 
-    // useEffect(() => {
-    //     console.log("conturi: ", accounts)
-    // }, [accounts]);
+    useEffect(() => {
+        console.log("conturi: ", bankOption)
+    }, [bankOption]);
 
     const closeModal = (setModalVisibile) => {
         return () => { //functia fara return ar fi fost apelata imediat
@@ -172,11 +186,20 @@ function UploadTransactions() {
                         data={accounts} keyExtractor={(item) => item.idaccounts} onItemPress={handleAccount} nrCol={2}
                     />
 
+                    {/* ---------------pick the bank type------------- */}
+                    <View style={styles.row}>
+                        <Text style={styles.label}>Bank type: </Text>
+                        <TextInput style={[styles.input, { borderWidth: 0, fontSize: 16 }]} value={bankOption} editable={false} />
+                    </View>
+                    <Pressable
+                        style={[styles.button, styles.buttonOpen]}
+                        onPress={() => setBankOptions(true)}>
+                        <Text style={styles.textStyle}>choose bank type</Text>
+                    </Pressable>
+
                     <TouchableOpacity title="Pick Document">
                         <Text style={[styles.label, { marginTop: 20 }]}>Upload a file</Text>
                     </TouchableOpacity>
-
-
 
                     <TouchableOpacity style={styles.documentUpload} onPress={pickDocument}>
                         <View style={{ alignItems: 'center' }}>
@@ -195,6 +218,30 @@ function UploadTransactions() {
                     </Pressable>
 
 
+                    <Modal visible={bankOptions} animationType="slide" transparent={true}>
+                        <View style={styles.modalContainer}>
+
+                            <View style={styles.modalCameraOptions}>
+                                <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Select the source</Text>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-around', flex: 1, width: '100%', borderRadius: 50, }}>
+
+                                    <TouchableOpacity onPress={() => { setBankOption('Raiffeisen'); setBankOptions(false) }} style={{ justifyContent: 'center', alignItems: 'center' }}>
+                                        <Text>Raiffeisen</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity onPress={() => { setBankOption('BRD'); setBankOptions(false) }} style={{ justifyContent: 'center', alignItems: 'center' }}>
+                                        <Text>BRD</Text>
+                                    </TouchableOpacity>
+
+                                </View>
+                                <TouchableOpacity onPress={() => setBankOptions(false)}>
+                                    <Text>close</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </Modal>
+
+
                 </View>
 
             </View>
@@ -209,6 +256,21 @@ function UploadTransactions() {
 export default UploadTransactions
 
 const styles = StyleSheet.create({
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+    },
+    modalCameraOptions: {
+        width: '80%',
+        height: '25%',
+        padding: 10,
+        alignItems: 'center',
+        backgroundColor: 'white',
+        borderRadius: 50,
+        elevation: 5
+    },
     documentUpload: {
         backgroundColor: '#f0f0f0',
         height: '30%',

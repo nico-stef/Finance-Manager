@@ -64,7 +64,7 @@ router.post('/addExpense', authenticateToken, async (req, res) => {
         //mai ales daca sunt folosite librarii precum mysql sau mysql2
         const newTotal = parseFloat(result2[0].total) - parseFloat(amount);
 
-        if(newTotal < 0){
+        if (newTotal < 0) {
             await connection.rollback();
             return res.status(400).json("Insufficient funds!");
         }
@@ -175,13 +175,16 @@ router.get('/getBudgets/:id_user', authenticateToken, async (req, res) => {
     const month = parseInt(req.query.month);
     const year = parseInt(req.query.year);
 
-    const query1 = `SELECT b.idbudgets, b.name, b.amount, SUM(e.amount) AS total
+    const dateLimit = new Date(year, month - 1, 1);
+    const formattedDate = dateLimit.toISOString().split('T')[0]; // '2025-05-01'
+
+    const query1 = `SELECT b.idbudgets, b.name, b.amount, SUM(e.amount) AS total, frequency, end_date
                   FROM budgets b
                   LEFT JOIN expenses e ON e.budget_id = b.idbudgets AND MONTH(e.date) = ? AND YEAR(e.date) = ?
-                  WHERE b.user_id = ? AND (b.frequency = 2 OR (MONTH(b.month) = ? AND YEAR(b.month) = ?))
-                  GROUP BY b.idbudgets;`
+                  WHERE b.user_id = ? AND ((b.frequency = 2 AND b.end_date > ? AND b.month < ? OR(b.frequency = 2 AND b.end_date IS NULL AND b.month < ?) ) OR (MONTH(b.month) = ? AND YEAR(b.month) = ?))
+                  GROUP BY b.idbudgets;` //deci alegem bugetele care sunt recurente inchise intre luna de definire si inchidere, si daca nu e inchis, bugetele recurente se afiseaza incepand cu luna in care au fost create
 
-    const data = [month, year, id_user, month, year]
+    const data = [month, year, id_user, formattedDate, formattedDate, formattedDate, month, year]
 
     try {
         const result = await queryFunction(query1, data);
@@ -193,23 +196,103 @@ router.get('/getBudgets/:id_user', authenticateToken, async (req, res) => {
 
 });
 
+router.put('/stopBudget/:id', authenticateToken, async (req, res) => {
+
+    const budgetId = req.params.id;
+
+    const query = `UPDATE budgets SET end_date = ? WHERE idbudgets = ? AND frequency = 2;`;
+    const today = new Date().toISOString().split('T')[0];
+    const data = [today, budgetId];
+
+    try {
+        const result = await queryFunction(query, data);
+        return res.status(200).json("Budget stopped succesfully");
+    } catch (err) {
+        console.error("Eroare la executarea interogării:", err);
+        return res.status(500).json({ message: "error at put budget" });
+    }
+
+});
+
+router.delete("/deleteBudget/:idBudget", authenticateToken, async (req, res) => {
+
+    const idBudget = parseInt(req.params.idBudget, 10);
+
+    const query1 =  `DELETE FROM budgets WHERE idbudgets = ?;`;
+
+    try {
+        const result = await queryFunction(query1, [idBudget]);
+        res.status(200).json({ message: 'Budget deleted successfully' });
+    } catch (err) {
+        console.error("Eroare la executarea interogării:", err);
+        return res.status(500).json({ message: "error at deleting objective" });
+    }
+
+});
+
+router.patch("/updateBudget/:idBudget", authenticateToken, async (req, res) => {
+
+    const idBudget = parseInt(req.params.idBudget, 10);
+    const { name, amount } = req.body;
+
+    const query1 =  `UPDATE budgets SET name = ?, amount = ? WHERE idbudgets = ?;`;
+
+    try {
+        const result = await queryFunction(query1, [name, amount, idBudget]);
+        res.status(200).json({ message: 'Budget updated successfully' });
+    } catch (err) {
+        console.error("Eroare la executarea interogării:", err);
+        return res.status(500).json({ message: "error at updating budget" });
+    }
+
+});
+
 router.get("/getDetailsBalance", authenticateToken, async (req, res) => {
 
     const userId = req.user.userid;
 
-    if(!userId)
+    if (!userId)
         return res.status(500).json({ message: "userId is null" });
 
-    const query =  `SELECT SUM(total) as totalBalance
+    const query = `SELECT SUM(total) as totalBalance
                     FROM accounts
                     WHERE id_user = ?;`;
+    
+    const query2 = `SELECT SUM(amount) as totalSpent
+                    FROM expenses e
+                    JOIN accounts a ON a.idaccounts = e.account_id
+                    WHERE MONTH(date) = MONTH(CURDATE()) AND id_user = ?;`;
+    
+    const query3 = `SELECT *
+                    FROM (SELECT e.idexpenses, e.amount, e.date, e.note, "expense" AS type
+                        FROM expenses e
+                        JOIN accounts a ON a.idaccounts = e.account_id
+                        WHERE MONTH(e.date) = MONTH(CURDATE()) 
+                        AND YEAR(e.date) = YEAR(CURDATE()) 
+                        AND a.id_user = ?
+                        
+                        UNION ALL
+                        
+                        SELECT i.idincomes, i.amount, i.date, i.note, "income" AS type
+                        FROM incomes i
+                        JOIN accounts a ON a.idaccounts = i.account_id
+                        WHERE MONTH(i.date) = MONTH(CURDATE()) 
+                        AND YEAR(i.date) = YEAR(CURDATE()) 
+                        AND a.id_user = ?
+                        ) AS combined
+                    ORDER BY combined.date DESC
+                    LIMIT 7;
+`
 
     try {
         const result = await queryFunction(query, [userId]);
-        return res.status(200).json(result[0].totalBalance);
+        const result2 = await queryFunction(query2, [userId]);
+        const result3 = await queryFunction(query3, [userId, userId]);
+        return res.status(200).json({totalBalance: result[0].totalBalance, totalSpent: result2[0].totalSpent, latestRecords: result3});
     } catch (err) {
-        return res.status(500).json({ message: "error at getting details" });
+        return res.status(500).json({ message: "error at getting details", err });
     }
 });
 
 module.exports = router;
+    

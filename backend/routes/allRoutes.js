@@ -7,6 +7,7 @@ var financialRecords = require('./financialRecords')
 var planner = require('./spendingPlanner')
 var transactionsCSV = require('./transactions_CSV')
 var transactionsPDF = require('./transactions_PDF')
+var advices = require('./advices')
 
 module.exports = function(app) {
   app.use(express.json());//converteste datele primite in format JSON in obiecte js
@@ -19,4 +20,5 @@ module.exports = function(app) {
   app.use('/planner', planner);
   app.use('/', transactionsCSV);
   app.use('/', transactionsPDF);
+  app.use('/', advices);
 };

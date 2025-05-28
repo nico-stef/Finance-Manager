@@ -12,4 +12,8 @@
 [v] sa fac mesajele pt update expense < 0
 [v] sa modific toate api-urile pt refreshtoken
 [v] sa vad la choose category expsne, nu apar?
-[] la import transactions sa extrag/adaug in conturi suma
+[v] la import transactions sa extrag/adaug in conturi suma
+[v] la budgets sa modific logica la query, sa nu ia si bugete stopped
+[] sa incarc expenses cate 10
+[] la openai api pe frontend am salvat in asyncstorage, sa scot aia la final ca sa nu fie hardcodat
+[] la update transactions sa pot sa le adaug/schimb bugetul

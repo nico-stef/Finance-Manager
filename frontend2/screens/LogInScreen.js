@@ -76,7 +76,7 @@ export default function LogInScreen() {
             const response = await login(username, password);
             await AsyncStorage.setItem('accessToken', response.accessToken);
             await SecureStore.setItemAsync('refreshToken',  response.refreshToken);
-            navigation.navigate('Profile');
+            navigation.navigate('Home');
         } catch (err) {
             if(err.message == "Incorrect password")
                 Alert.alert('Error', 'Incorrect password');

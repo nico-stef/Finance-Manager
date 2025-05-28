@@ -107,7 +107,30 @@ export const getBudgetsAll = async (userId, currentMonth, currentYear) => {
     }
 };
 
+export const deleteBudget= async (budgetId) => {
+    try {
+        const response = await api.delete(`${API_URL}/deleteBudget/${budgetId}`);
+        return response.data;
+    } catch (error) {
+        console.log('Eroare la cererea DELETE budget:', error);
+        return 'error';
+    }
+};
 
+export const updateBudget= async (name, amount, budgetId) => {
+    try {
+        const response = await api.patch(`${API_URL}/updateBudget/${budgetId}`,
+            {
+                name,
+                amount
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.log('Eroare la cererea UPDATE budget:', error);
+        return 'error';
+    }
+};
 
 export const getDetailsBalance = async () => {
     try {
@@ -119,40 +142,12 @@ export const getDetailsBalance = async () => {
     }
   };
 
-// export const getDetailsBalance = async (accessToken) => {
-//     try {
-//         const response = await axios.get(`${API_URL}/getDetailsBalance`, {
-//             headers: {
-//                 'Authorization': `Bearer ${accessToken}`
-//             }
-//         });
-//         return response.data;
-//     } catch (error) {
-//         if (error.response && error.response.status === 403) {
-           
-//             try {
-//                 const refreshToken = await SecureStore.getItemAsync('refreshToken');
-//                 const res = await axios.post(`${API_URL}/refreshToken`, {
-//                     token: refreshToken
-//                 });
-
-//                 const newAccessToken = res.data.accessToken;
-//                 await AsyncStorage.setItem('accessToken', newAccessToken);
-
-//                 // Refacem requestul cu token nou
-//                 const retryResponse = await axios.get(`${API_URL}/getDetailsBalance`, {
-//                     headers: {
-//                         'Authorization': `Bearer ${newAccessToken}`
-//                     }
-//                 });
-
-//                 return retryResponse.data;
-//             } catch (refreshError) {
-//                 console.log('Eroare la refresh:', refreshError);
-//                 await AsyncStorage.removeItem('accessToken');
-//                 await SecureStore.deleteItemAsync('refreshToken');
-//                 return 'error';
-//             }
-//         }
-//     }
-// };
+export const stopBudget = async (budgetId) => {
+    try {
+        const response = await api.put(`${API_URL}/stopBudget/${budgetId}`);
+        return response;
+    } catch (error) {
+        console.log('Eroare la cererea PUT stop budget:', error);
+        return 'error';
+    }
+};

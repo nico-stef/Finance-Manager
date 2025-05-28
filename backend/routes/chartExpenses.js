@@ -75,6 +75,65 @@ router.get("/getExpensesPerCateogory", async (req, res) => {
 
 });
 
+function generateBudgetMessages(data) {
+
+    if (!Array.isArray(data) || data.length < 2) {
+        return [`Add more expenses over time to get personalized tips :)`];
+    }
+
+    const parsedData = data.map(d => ({
+        ...d,
+        total: parseFloat(d.total)
+    }));
+
+    const values = parsedData.map(d => d.total);
+    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+    const maxVal = Math.max(...values);
+    const minVal = Math.min(...values);
+
+    let maxMonth = parsedData.find(d => d.total === maxVal)?.month;
+    let minMonth = parsedData.find(d => d.total === minVal)?.month;
+
+    let lastMonth = parsedData[parsedData.length - 1];
+    let prevMonth = parsedData[parsedData.length - 2];
+
+    const messages = [];
+
+    // Insights
+
+    if (lastMonth.total < avg * 0.5) {
+        messages.push("You spent significantly less than your average last month. Great job staying frugal!");
+    } else if (lastMonth.total > avg * 1.5) {
+        messages.push("Your spending last month was much higher than usual. Review your expenses.");
+    }
+
+    // Compare last two months
+    if (lastMonth.total > prevMonth.total) {
+        messages.push("Your spending increased compared to the previous month.");
+    } else if (lastMonth.total < prevMonth.total) {
+        messages.push("Your spending decreased compared to the previous month.");
+    } else {
+        messages.push("Your spending remained the same as the previous month.");
+    }
+
+    // Advice
+    if (maxVal > avg * 2) {
+        messages.push("You had a significant spike in one of the months. Check for unusual or one-time expenses.");
+    }
+
+    maxMonth = maxMonth + "-01";
+    maxMonth = new Date(maxMonth);
+    minMonth = minMonth + "-01";
+    minMonth = new Date(minMonth);
+
+    messages.push(`Your highest spending was in ${maxMonth.toLocaleString("en-US", { month: "long" })} ${maxMonth.getFullYear()}, with ${maxVal.toFixed(2)} RON.`);
+    messages.push(`Your lowest spending was in ${minMonth.toLocaleString("en-US", { month: "long" })} ${minMonth.getFullYear()}, with ${minVal.toFixed(2)} .`);
+    messages.push(`Your average monthly spending is ${avg.toFixed(2)} RON.`);
+
+    return messages;
+}
+
+
 router.get("/getExpenseTendencies/:userId", async (req, res) => {
 
     const { userId } = req.params;
@@ -88,7 +147,11 @@ router.get("/getExpenseTendencies/:userId", async (req, res) => {
 
     try {
         const result = await queryFunction(query, [userId]); //array de obiecte
-        return res.status(200).json(result);
+        let messages = '';
+        if (result)
+            messages = generateBudgetMessages(result);
+        console.log(messages)
+        return res.status(200).json({ result: result, messages: messages });
 
     } catch (err) {
         console.error("Eroare la executarea interogării:", err);
@@ -97,6 +160,50 @@ router.get("/getExpenseTendencies/:userId", async (req, res) => {
 
 });
 
+function generateBudgetAdvice(data) {
+    const { expensesMonthly, adjustedBudgets } = data;
+    if(expensesMonthly.length === 0)
+        return ["You haven't added any expenses in the past 6 months. Start tracking your spending to get insights."];
+    if(adjustedBudgets.length === 0)
+        return ["You haven't set any budgets yet. Set monthly budgets to better understand and control your expenses."];
+
+    const expensesMap = Object.fromEntries(
+        expensesMonthly.map(e => [e.month, parseFloat(e.totalSpent)])
+    );
+
+    const budgetsMap = Object.fromEntries(
+        adjustedBudgets.map(b => [b.month, parseFloat(b.total_budget)])
+    );
+
+    const messages = [];
+
+    for (const month of Object.keys(expensesMap)) {
+        if (budgetsMap[month]) {
+            const spent = expensesMap[month];
+            const budget = budgetsMap[month];
+            const percent = (spent / budget) * 100;
+
+            const date = new Date(month + "-01");
+            const label = date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+            if (percent < 50) {
+                messages.push(`In ${label}, you spent only ${percent.toFixed(1)}% of your budget. Great job staying frugal!`);
+            } else if (percent >= 50 && percent <= 100) {
+                messages.push(`In ${label}, you used ${percent.toFixed(1)}% of your budget. You're staying within your limits.`);
+            } else {
+                messages.push(`In ${label}, you exceeded your budget by spending ${percent.toFixed(1)}%. Consider reviewing your expenses.`);
+            }
+        }
+    }
+
+    if (messages.length === 0) {
+        messages.push("Not enough data to generate insights. Please add budgets and expenses to get personalized advice.");
+    }
+
+    return messages;
+}
+
+
 router.get("/budgetComparisson/:userId", async (req, res) => {
 
     const { userId } = req.params;
@@ -104,7 +211,7 @@ router.get("/budgetComparisson/:userId", async (req, res) => {
     const query = `SELECT DATE_FORMAT(e.date, '%Y-%m') AS month, SUM(e.amount) AS totalSpent
                     FROM expenses e
                     JOIN budgets b ON b.idbudgets = e.budget_id
-                    WHERE b.user_id = ? AND e.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+                    WHERE b.user_id = ? AND e.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) AND DATE_FORMAT(e.date, '%Y-%m') = DATE_FORMAT(b.month, '%Y-%m')
                     GROUP BY DATE_FORMAT(e.date, '%Y-%m')
                     ORDER BY month;`;
 
@@ -120,12 +227,12 @@ router.get("/budgetComparisson/:userId", async (req, res) => {
                     WHERE user_id = ? AND frequency = 2`;
 
     try {
-        const  expensesMonthly = await queryFunction(query, [userId]);
+        const expensesMonthly = await queryFunction(query, [userId]);
 
-        const  monthlyBudgets = await queryFunction(query2, [userId]);
+        const monthlyBudgets = await queryFunction(query2, [userId]);
 
-        const  recurringTotal = await queryFunction(query3, [userId]);
-        
+        const recurringTotal = await queryFunction(query3, [userId]);
+
 
         const recurringSum = recurringTotal[0].recurring_total || 0;
 
@@ -134,7 +241,10 @@ router.get("/budgetComparisson/:userId", async (req, res) => {
             total_budget: parseFloat(b.total_budget) + parseFloat(recurringSum)
         }));
 
-        return res.status(200).json({expensesMonthly, adjustedBudgets});
+        const messages = generateBudgetAdvice({expensesMonthly, adjustedBudgets});
+        console.log(messages);
+
+        return res.status(200).json({ expensesMonthly, adjustedBudgets, messages: messages });
 
     } catch (err) {
         console.error("Eroare la executarea interogării:", err);

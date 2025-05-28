@@ -1,7 +1,7 @@
 import React from 'react';
 import { useEffect, useState } from "react";
 import { LineChart } from "react-native-chart-kit";
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
 import { Dimensions } from 'react-native';
 import { getBudgetComparissonData } from '../APIs/chart';
 
@@ -13,6 +13,7 @@ function BarChartComponent() {
     const [dataChart1, setDataChart1] = useState([]);
     const [dataChart2, setDataChart2] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [insights, setInsights] = useState([]);
 
     useEffect(() => {
         if (dataChart1 && dataChart1.length > 0 && dataChart2 && dataChart2)
@@ -26,15 +27,15 @@ function BarChartComponent() {
         ]);
 
         const allMonths = Array.from(allMonthsSet).sort();
-        
+
         const monthsResult = allMonths.map(item => {
             const date = new Date(item + "-01");
-  
+
             return date.toLocaleDateString("en-US", {
-              month: 'short',
+                month: 'short',
             })
         });
-        
+
         setMonths(monthsResult);
 
         const spentMap = Object.fromEntries(
@@ -56,59 +57,111 @@ function BarChartComponent() {
     useEffect(() => {
         const getBudgetComparissonDataAsync = async () => {
             const res = await getBudgetComparissonData(23);
-            if(res === 'error'){
+            if (res === 'error') {
                 navigation.navigate('LogIn');
                 return;
             }
             setExpenses(res.expensesMonthly);
             setAmountBudgets(res.adjustedBudgets);
+            setInsights(res.messages);
         };
         getBudgetComparissonDataAsync();
     }, []);
 
     return (
-        <View style={{marginTop: 15}}>
-            {loading ? <LineChart
-                data={{
-                    labels: months,
-                    datasets: [
-                        {
-                            data: dataChart1,
-                            color: () => 'red'
-                        },
-                        {
-                            data: dataChart2,
-                            color: () => 'blue'
-                        },
-                    ],
-                    legend: ["actually spent", "budget planned"]
-                }}
-                width={Dimensions.get('window').width - 20}
-                height={220}
-                yAxisInterval={1} // optional, defaults to 1
-                chartConfig={{
-                    backgroundGradientFrom: "#A2D4C0",
-                    backgroundGradientTo: "#5BA199",
-                    decimalPlaces: 2, // optional, defaults to 2dp
-                    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                    labelColor: (opacity = 1) => `black`,
-                    style: {
-                        borderRadius: 16
-                    },
-                    propsForDots: {
-                        r: "6",
-                        strokeWidth: "2",
-                        stroke: "#ffa726"
-                    }
-                }}
-                bezier
-                style={{
-                    marginVertical: 8,
-                    borderRadius: 16
-                }}
-            /> : <ActivityIndicator size="large" />}
+        <View style={{ marginTop: 15 }}>
+            {loading ?
+                <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
+                    <LineChart
+                        data={{
+                            labels: months,
+                            datasets: [
+                                {
+                                    data: dataChart1,
+                                    color: () => 'red'
+                                },
+                                {
+                                    data: dataChart2,
+                                    color: () => 'blue'
+                                },
+                            ],
+                            legend: ["actually spent", "budget planned"]
+                        }}
+                        width={Dimensions.get('window').width - 20}
+                        height={220}
+                        yAxisInterval={1} // optional, defaults to 1
+                        chartConfig={{
+                            backgroundGradientFrom: "#A2D4C0",
+                            backgroundGradientTo: "#5BA199",
+                            decimalPlaces: 2, // optional, defaults to 2dp
+                            color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                            labelColor: (opacity = 1) => `black`,
+                            style: {
+                                borderRadius: 16
+                            },
+                            propsForDots: {
+                                r: "6",
+                                strokeWidth: "2",
+                                stroke: "#ffa726"
+                            }
+                        }}
+                        bezier
+                        style={{
+                            marginVertical: 8,
+                            borderRadius: 16
+                        }}
+                    />
+
+                    <Text style={{ textAlign: 'center', fontWeight: 'bold', fontSize: 18, marginTop: 16 }}>
+                        Insights for the last months
+                    </Text>
+
+                    {insights && (
+                        insights.map((item, index) => (
+                            <View key={index.toString()} style={styles.messageCard}>
+                                <Text style={styles.bullet}>📌</Text>
+                                <Text style={styles.messageText}>{item}</Text>
+                            </View>
+                        ))
+                    )}
+                </ScrollView> : <ActivityIndicator size="large" />}
         </View>
     )
 }
 
 export default BarChartComponent
+
+const styles = StyleSheet.create({
+    messageCard: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        backgroundColor: '#ffffff',
+        padding: 12,
+        marginVertical: 6,
+        marginHorizontal: 2,
+        borderRadius: 10,
+        elevation: 2,
+        borderLeftWidth: 4,
+        borderLeftColor: '#5BA199'
+    },
+
+    bullet: {
+        fontSize: 18,
+        marginRight: 8,
+        marginTop: 2
+    },
+
+    messageText: {
+        flex: 1,
+        fontSize: 16,
+        color: '#333',
+        lineHeight: 22
+    },
+
+    empty: {
+        textAlign: 'center',
+        fontSize: 16,
+        color: '#999',
+        marginVertical: 20
+    }
+})

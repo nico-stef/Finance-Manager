@@ -84,7 +84,7 @@ export default function FinancialRecords() {
     useEffect(() => {
         getExpensesRecords(account.idaccounts, userid)
             .then((data) => {
-                if(data === 'error'){
+                if (data === 'error') {
                     navigation.navigate('LogIn');
                     return;
                 }
@@ -280,14 +280,20 @@ export default function FinancialRecords() {
                         <Text style={styles.buttonText}>{account.name}</Text>
                     </TouchableOpacity>
 
-                    <FlatList
-                        data={flatlistData}
-                        extraData={flatlistData}
-                        renderItem={({ item }) => <Record item={item} />}
-                        keyExtractor={item => item.idexpenses ? item.idexpenses : item.idincomes}
-                        initialNumToRender={10}
-                        contentContainerStyle={{ paddingBottom: 80 }}
-                    />
+                    {!flatlistData ?
+                        <View style={styles.container}>
+                            <Text style={styles.message}>
+                                No transactions yet. Start logging your transactions and they will appear here!
+                            </Text>
+                        </View> :
+                        <FlatList
+                            data={flatlistData}
+                            extraData={flatlistData}
+                            renderItem={({ item }) => <Record item={item} />}
+                            keyExtractor={item => item.idexpenses ? item.idexpenses : item.idincomes}
+                            // initialNumToRender={10}
+                            contentContainerStyle={{ paddingBottom: 80 }}
+                        />}
 
                 </View>
 
@@ -468,6 +474,18 @@ export default function FinancialRecords() {
 }
 
 const styles = StyleSheet.create({
+    container: {
+        padding: 20,
+        marginTop: 50,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    message: {
+        fontSize: 16,
+        textAlign: 'center',
+        color: '#555',
+        lineHeight: 22,
+    },
     centeredView: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.4)',
