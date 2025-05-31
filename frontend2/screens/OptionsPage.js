@@ -58,7 +58,7 @@ export default function OptionsPage({ route }) {
     //get options
     const getOptionsAsync = async () => {
         const result = await getOptions(objectiveId);
-        if(result === 'error'){
+        if (result === 'error') {
             navigation.navigate('LogIn');
             return;
         }
@@ -76,7 +76,7 @@ export default function OptionsPage({ route }) {
     useEffect(() => {
         const getObjectiveAsync = async () => {
             const result = await getObjective(objectiveId);
-            if(result === 'error'){
+            if (result === 'error') {
                 navigation.navigate('LogIn');
                 return;
             }
@@ -121,7 +121,7 @@ export default function OptionsPage({ route }) {
         setAvailableAmount(sum);
     };
 
-        useEffect(() => {
+    useEffect(() => {
         console.log("objective: ", options)
     }, [options]);
 
@@ -130,10 +130,14 @@ export default function OptionsPage({ route }) {
 
         const handleCheckbox = async () => {
             const response = await updateOption(item.idOption, !isChecked);
-            if(response === 'error'){
+            if (response.response && (response.response.status === 401 || response.response.status === 403)) {
                 navigation.navigate('LogIn');
                 return;
             }
+             if (response.response && response.response.status === 409){
+                Alert.alert("Warning",response.response.data.message);
+                return;
+             }
             setChecked(!isChecked);
             onCheckboxToggle(item.idOption);
         };
@@ -168,7 +172,7 @@ export default function OptionsPage({ route }) {
 
     const handleDeleteObjective = async () => {
         const response = await deleteObjective(objectiveId);
-        if(response === 'error'){
+        if (response === 'error') {
             navigation.navigate('LogIn');
             return;
         }

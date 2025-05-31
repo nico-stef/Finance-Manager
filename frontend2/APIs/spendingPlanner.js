@@ -109,6 +109,6 @@ export const updateOption = async (optionId, chosen) => {
         return response.data;
     } catch (error) {
         console.log('Eroare la cererea DELETE option:', error);
-        return 'error';
+        return error;
     }
 };

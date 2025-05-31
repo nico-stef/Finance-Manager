@@ -17,3 +17,6 @@
 [] sa incarc expenses cate 10
 [] la openai api pe frontend am salvat in asyncstorage, sa scot aia la final ca sa nu fie hardcodat
 [] la update transactions sa pot sa le adaug/schimb bugetul
+[] la profil sa scot butonul de see profile si sa pun numele sus pe pagina si atat
+[] in optionsPage la updateOption am varianta corecta de gestionare a navigate to login, verifica si codul de eroare, ca altfel la orice eroare ma
+redirectiona spre Login
